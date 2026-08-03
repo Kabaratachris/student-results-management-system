@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    cno = db.Column(db.String(20), unique=True)
+    cno = db.Column(db.String(20))
     first_name = db.Column(db.String(50))
     middle_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
@@ -30,7 +30,10 @@ class Student(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     deleted_at = db.Column(db.DateTime)
     
-    # Relationships
+    __table_args__ = (
+        db.UniqueConstraint('cno', 'current_class', name='unique_cno_per_class'),
+    )
+    
     subject_registrations = db.relationship('StudentSubjectRegistration', backref='student', lazy=True)
 
 
@@ -48,7 +51,6 @@ class Subject(db.Model):
         db.UniqueConstraint('code', 'level', name='unique_code_level'),
     )
     
-    # Relationships
     registrations = db.relationship('StudentSubjectRegistration', backref='subject', lazy=True)
 
 
@@ -74,7 +76,6 @@ class StudentSubject(db.Model):
     points = db.Column(db.Integer, nullable=True)
     behavior_comment = db.Column(db.Text, nullable=True)
     
-    # Relationships
     student = db.relationship('Student', backref=db.backref('exam_subjects', lazy=True))
     exam = db.relationship('Exam', backref=db.backref('student_subjects', lazy=True))
     subject = db.relationship('Subject', backref=db.backref('student_subjects', lazy=True))
@@ -99,7 +100,6 @@ class Promotion(db.Model):
 
 
 class StudentSubjectRegistration(db.Model):
-    """Tracks which subjects a student is registered for."""
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'))
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))

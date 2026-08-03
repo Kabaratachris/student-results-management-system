@@ -489,7 +489,6 @@ def register_student():
                     db.session.add(StudentSubjectRegistration(student_id=student.id, subject_id=subj.id))
             
             db.session.commit()
-            reassign_cno(student.current_class)
             flash('Student registered.')
             return redirect(url_for('registry'))
         except Exception as e:
@@ -581,21 +580,23 @@ def bulk_upload():
             
             db.session.commit()
             
-            # Now reassign CNOs ONLY for this class
-            students_in_class = Student.query.filter_by(
-                current_class=class_name,
-                is_deleted=False
-            ).order_by(Student.id).all()
-            
-            # Find students in this class WITHOUT CNO
+            # Assign CNOs ONLY to new students without CNO
             if class_name in ['Form5', 'Form6']:
                 start = 501
             else:
                 start = 1
             
             # Find highest CNO in this class
+            students_in_class = Student.query.filter_by(
+                current_class=class_name,
+                is_deleted=False
+            ).order_by(Student.id).all()
+            print(f"DEBUG: Found {len(students_in_class)} students in class {class_name}")
+
+            for s in students_in_class[:5]:  # Print first 5
+                print(f"  Student ID={s.id}, CNO='{s.cno}', Name={s.first_name}")
             for s in students_in_class:
-                if s.cno:
+                if s.cno and s.cno.startswith('S3560-'):
                     try:
                         num = int(s.cno.split('-')[1])
                         if num >= start:
@@ -603,17 +604,22 @@ def bulk_upload():
                     except:
                         pass
             
-            # Assign CNOs to students without one
-            assigned = 0
+                        # Assign to students with no CNO
+            cno_assigned = 0
             for s in students_in_class:
-                if not s.cno:
+                # Check if CNO is missing or empty
+                if s.cno is None or str(s.cno).strip() == '' or s.cno == '':
                     s.cno = f"S3560-{start:04d}"
                     start += 1
-                    assigned += 1
+                    cno_assigned += 1
+                    print(f"Assigned CNO {s.cno} to student {s.id}")
             
-            db.session.commit()
+            print(f"Total CNOs assigned: {cno_assigned}")
             
-            flash(f'Uploaded {success} students to {class_name}. {assigned} CNOs assigned.')
+            if cno_assigned > 0:
+                db.session.commit()
+            
+            flash(f'Successfully uploaded {success} students to {class_name}. {cno_assigned} CNOs assigned.')
             if errors > 0:
                 flash(f'{errors} rows skipped due to errors.', 'warning')
             
@@ -621,7 +627,7 @@ def bulk_upload():
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error: {str(e)}')
+            flash(f'Error uploading students: {str(e)}')
             print(f"Upload error: {e}")
     
     classes = ['Form1', 'Form2', 'Form3', 'Form4', 'Form5', 'Form6']
