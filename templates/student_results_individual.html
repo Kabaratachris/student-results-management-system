@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="no-print mb-3">
+    <a href="{{ url_for('student_view_individual') }}" class="btn btn-secondary">← Back to Search</a>
+    <a href="{{ url_for('student_view') }}" class="btn btn-outline-secondary">View Class Results</a>
+</div>
+
+{% for exam_data in exams %}
+<div class="school-title-banner">
+    <h6>{{ school_info.country }}</h6>
+    <h6>{{ school_info.ministry }}</h6>
+    <h6>{{ school_info.region }}</h6>
+    <h6>{{ school_info.district }}</h6>
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>{{ get_class_number(exam_data.exam.target_class) }}</h5>
+    <h5>{{ get_exam_type_label(exam_data.exam.exam_type) }}</h5>
+    <h6>{{ exam_data.exam.month_year_label }}</h6>
+</div>
+
+<div class="school-title-banner">
+    <h5>INDIVIDUAL STUDENT RESULT</h5>
+</div>
+
+<table class="table table-bordered table-sm" style="max-width: 600px; margin: 0 auto;">
+    <tr>
+        <th style="width: 150px; background-color: #E8E8D0;">CNO</th>
+        <td style="font-weight: bold; font-size: 16px;">{{ student.cno }}</td>
+    </tr>
+    <tr>
+        <th style="background-color: #E8E8D0;">SEX</th>
+        <td>{{ student.sex }}</td>
+    </tr>
+    <tr>
+        <th style="background-color: #E8E8D0;">AGGT</th>
+        <td>{{ exam_data.result.agg if exam_data.result else 'N/A' }}</td>
+    </tr>
+    <tr>
+        <th style="background-color: #E8E8D0;">DIVISION</th>
+        <td style="font-weight: bold; font-size: 18px; color: {% if exam_data.result and exam_data.result.division == 'I' %}#006400{% elif exam_data.result and exam_data.result.division == '0' %}#FF0000{% else %}#000080{% endif %};">
+            {{ exam_data.result.division if exam_data.result else 'N/A' }}
+        </td>
+    </tr>
+    <tr>
+        <th style="background-color: #E8E8D0;">DETAILED SUBJECTS</th>
+        <td style="font-size: 12px;">{{ exam_data.detailed }}</td>
+    </tr>
+</table>
+
+<!-- Subject-wise Breakdown -->
+<h5 class="mt-4" style="color:#800080; text-align:center;">SUBJECT BREAKDOWN</h5>
+<table class="table table-bordered table-sm" style="max-width: 500px; margin: 0 auto;">
+    <thead>
+        <tr>
+            <th style="background-color: #E8E8D0;">Subject</th>
+            <th style="background-color: #E8E8D0;">Marks</th>
+            <th style="background-color: #E8E8D0;">Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set subjects_list = get_subjects_for_exam(exam_data.exam) %}
+        {% for subj in subjects_list %}
+        {% set ss = StudentSubject.query.filter_by(student_id=student.id, exam_id=exam_data.exam.id, subject_id=subj.id).first() %}
+        <tr>
+            <td>{{ subj.name }}</td>
+            <td>{{ ss.marks if ss and ss.marks is not none else '-' }}</td>
+            <td style="font-weight: bold;">{{ ss.grade if ss and ss.grade else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="no-print mt-4 text-center">
+    <a href="{{ url_for('student_results_pdf', student_id=student.id, exam_id=exam_data.exam.id) }}" 
+       class="btn btn-danger btn-lg" target="_blank">
+        📥 Download PDF
+    </a>
+    <button onclick="window.print()" class="btn btn-secondary btn-lg">🖨️ Print</button>
+</div>
+
+{% if not loop.last %}
+<hr style="border: 2px solid #000080; margin: 30px 0;">
+{% endif %}
+{% endfor %}
+
+<div class="no-print text-center mt-4 mb-4" style="color: #000080; font-size: 12px;">
+    <p>This is your personal result. Keep your CNO safe for future access.</p>
+</div>
+{% endblock %}

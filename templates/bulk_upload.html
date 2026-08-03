@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>BULK UPLOAD STUDENTS</h5>
+</div>
+
+<div class="card mb-3" style="border:1px solid #000080;">
+    <div class="card-body" style="background-color:#FFFFF0;">
+        <h6 style="color:#800080;">Step 1: Download Template</h6>
+        <div class="row">
+            {% for c in ['Form1','Form2','Form3','Form4','Form5','Form6'] %}
+            <div class="col-md-2 mb-2">
+                <a href="{{ url_for('download_student_template', class_name=c) }}" class="btn btn-sm btn-outline-primary w-100">📥 {{ c }}</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label style="color:#000080; font-weight:bold;">Select Class *</label>
+            <select name="class_name" class="form-select" required>
+                <option value="">-- Choose --</option>
+                {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label style="color:#000080; font-weight:bold;">Upload CSV *</label>
+            <input type="file" name="file" class="form-control" accept=".csv" required>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="background-color:#000080;">Upload</button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

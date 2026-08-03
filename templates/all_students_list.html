@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>All Students</title>
+<style>
+    body{background-color:#B0E0E6;font-family:Arial;font-size:10px;margin:15px;}
+    .header{text-align:center;background-color:#ADD8E6;padding:8px;border:1px solid #000080;margin-bottom:10px;}
+    .header h6,.header h5{color:#800080;margin:2px 0;}
+    table{width:100%;border-collapse:collapse;background-color:#FFFFF0;margin-bottom:10px;}
+    th,td{border:1px solid #000080;padding:3px;color:#000080;}
+    th{background-color:#E8E8D0;}
+    .page-break{page-break-before:always;}
+    .class-title{background-color:#ADD8E6;padding:5px;color:#800080;font-weight:bold;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="header">
+    <h6>{{ school_info.country }}</h6><h6>{{ school_info.ministry }}</h6><h6>{{ school_info.region }}</h6><h6>{{ school_info.district }}</h6>
+    <h5>S3560 UCHILE SECONDARY SCHOOL</h5><h5>ALL STUDENTS LIST</h5>
+</div>
+{% for cls in classes %}{% if all_data[cls] %}
+<div {% if not loop.first %}class="page-break"{% endif %}>
+    <div class="class-title">{{ cls }} - {{ all_data[cls]|length }} Students</div>
+    <table><thead><tr><th>CNO</th><th>FULL NAME</th><th>SEX</th><th>STREAM</th><th>COMBINATION</th><th>CURRICULUM</th></tr></thead>
+        <tbody>{% for s in all_data[cls] %}<tr><td>{{ s.cno }}</td><td>{{ s.first_name }} {{ s.middle_name or '' }} {{ s.last_name }}</td><td>{{ s.sex }}</td><td>{{ s.stream }}</td><td>{{ s.combination or '-' }}</td><td>{{ s.curriculum }}</td></tr>{% endfor %}</tbody></table>
+</div>
+{% endif %}{% endfor %}
+</body>
+</html>

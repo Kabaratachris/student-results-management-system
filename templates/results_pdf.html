@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results - {{ exam.name }}</title>
+    <style>
+        body { 
+            background-color: #B0E0E6; 
+            font-family: Arial; 
+            font-size: 8px; 
+            margin: 15px;
+        }
+        .header { 
+            text-align: center; 
+            background-color: #ADD8E6; 
+            padding: 8px; 
+            border: 1px solid #000080; 
+            margin-bottom: 8px; 
+        }
+        .header h6, .header h5, .header h4 { color: #800080; margin: 1px 0; }
+        .summary-table { margin-bottom: 10px; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background-color: #FFFFF0; 
+            margin-bottom: 8px; 
+        }
+        th, td { 
+            border: 1px solid #000080; 
+            padding: 3px; 
+            text-align: center; 
+            color: #000080; 
+            font-size: 7px;
+        }
+        th { background-color: #E8E8D0; font-weight: bold; }
+        .page-break { page-break-before: always; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h6>{{ school_info.country }}</h6>
+        <h6>{{ school_info.ministry }}</h6>
+        <h6>{{ school_info.region }}</h6>
+        <h6>{{ school_info.district }}</h6>
+        <h5>S3560 UCHILE SECONDARY SCHOOL</h5>
+        <h5>{{ get_class_number(exam.target_class) }}</h5>
+        <h5>{{ get_exam_type_label(exam.exam_type) }}</h5>
+        <h6>{{ exam.month_year_label }}</h6>
+    </div>
+
+    <!-- Summary -->
+    <div class="header">
+        <h5>DIVISION PERFORMANCE SUMMARY</h5>
+    </div>
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>REGISTERED</th><th>SAT</th><th>ABS</th>
+                <th>DIV I</th><th>DIV II</th><th>DIV III</th><th>DIV IV</th><th>0</th><th>PASSED</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ total_registered }}</td>
+                <td>{{ sat_count }}</td>
+                <td>{{ abs_count }}</td>
+                <td>{{ div_counts['I']['T'] }}</td>
+                <td>{{ div_counts['II']['T'] }}</td>
+                <td>{{ div_counts['III']['T'] }}</td>
+                <td>{{ div_counts['IV']['T'] }}</td>
+                <td>{{ div_counts['0']['T'] }}</td>
+                <td>{{ total_passed }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Overall School GPA -->
+    <table>
+        <tr><th>Registered</th><th>SAT</th><th>Total Passed</th><th>Overall GPA</th></tr>
+        <tr><td>{{ total_registered }}</td><td>{{ sat_count }}</td><td>{{ total_passed }}</td><td>{{ overall_gpa }}</td></tr>
+    </table>
+
+    <!-- Detailed Subject Performance -->
+    <div class="header">
+        <h5>DETAILED SUBJECT PERFORMANCE</h5>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>S/N</th><th>CODE</th><th>SUBJECT</th>
+                <th>REGIST</th><th>SAT</th>
+                {% if level == 'O' %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                {% else %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
+                {% endif %}
+                <th>PASSED</th><th>GPA</th><th>LEVEL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in subject_performance %}
+            <tr>
+                <td>{{ sp.sn }}</td>
+                <td>{{ sp.necta_code }}</td>
+                <td>{{ sp.name }}</td>
+                <td>{{ sp.regist_total }}</td>
+                <td>{{ sp.sat }}</td>
+                {% if level == 'O' %}
+                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td>
+                <td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td>
+                <td>{{ sp.grades['F'] }}</td>
+                {% else %}
+                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td>
+                <td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td>
+                <td>{{ sp.grades['E'] }}</td><td>{{ sp.grades['S'] }}</td>
+                <td>{{ sp.grades['F'] }}</td>
+                {% endif %}
+                <td>{{ sp.total_passed }}</td>
+                <td>{{ sp.gpa }}</td>
+                <td style="background-color: {{ sp.competence_color }}; color: white; font-weight: bold;">
+                    {{ sp.competence_label }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Student Results -->
+    <div class="header">
+        <h5>STUDENT RESULTS</h5>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>CNO</th><th>SEX</th><th>NAME</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sr in student_results %}
+            <tr>
+                <td>{{ sr.student.cno }}</td>
+                <td>{{ sr.student.sex }}</td>
+                <td>{{ sr.full_name }}</td>
+                <td>{{ sr.result.agg if sr.result else '-' }}</td>
+                <td>{{ sr.result.division if sr.result else '-' }}</td>
+                <td>{{ sr.detailed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h5>{{ school_info.country }}</h5>
+    <h6>{{ school_info.ministry }}</h6>
+    <h6>{{ school_info.region }}</h6>
+    <h6>{{ school_info.district }}</h6>
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>ADMIN DASHBOARD</h5>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('register_student') }}" class="btn btn-primary w-100">Register Student</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('bulk_upload') }}" class="btn btn-primary w-100">Bulk Upload</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('create_exam') }}" class="btn btn-primary w-100">Create Exam</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('registry') }}" class="btn btn-primary w-100">Registry</a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('deleted_students') }}" class="btn btn-warning w-100">Deleted Students</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('promote') }}" class="btn btn-success w-100">Promote Students</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('all_students_list') }}" class="btn btn-info w-100">All Students PDF</a>
+    </div>
+    <div class="col-md-3 mb-2">
+        <a href="{{ url_for('student_view') }}" class="btn btn-secondary w-100">Public Results</a>
+    </div>
+</div>
+
+<hr style="border: 2px solid #000080;">
+
+<h5 style="color:#800080;">EXAMS LIST</h5>
+
+{% if exams %}
+<div class="table-responsive">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Exam Name</th>
+                <th>Class</th>
+                <th>Type</th>
+                <th>Term</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exam in exams %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ exam.name }}</td>
+                <td>{{ exam.target_class }}</td>
+                <td>{{ exam.exam_type }}</td>
+                <td>{{ exam.term }}</td>
+                <td>{{ exam.date.strftime('%d-%m-%Y') if exam.date else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('teacher_fill_scores', exam_id=exam.id) }}" class="btn btn-sm btn-success">Fill Scores</a>
+                    <a href="{{ url_for('process_results_route', exam_id=exam.id) }}" class="btn btn-sm btn-warning">Process Results</a>
+                    <a href="{{ url_for('view_results', exam_id=exam.id) }}" class="btn btn-sm btn-info">View Results</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info" style="color: #000080; border: 1px solid #000080;">
+    <p>No exams have been created yet.</p>
+    <a href="{{ url_for('create_exam') }}" class="btn btn-primary">Create Your First Exam</a>
+</div>
+{% endif %}
+{% endblock %}

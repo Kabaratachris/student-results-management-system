@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>EDIT STUDENT - {{ student.cno }}</h5>
+</div>
+
+<form method="POST">
+    <div class="row">
+        <div class="col-md-4 mb-2"><label style="color:#000080;font-weight:bold;">First Name *</label><input type="text" name="first_name" class="form-control" value="{{ student.first_name }}" required></div>
+        <div class="col-md-4 mb-2"><label style="color:#000080;font-weight:bold;">Middle Name *</label><input type="text" name="middle_name" class="form-control" value="{{ student.middle_name or '' }}" required></div>
+        <div class="col-md-4 mb-2"><label style="color:#000080;font-weight:bold;">Last Name *</label><input type="text" name="last_name" class="form-control" value="{{ student.last_name }}" required></div>
+    </div>
+    <div class="row">
+        <div class="col-md-2 mb-2"><label style="color:#000080;">Sex</label><select name="sex" class="form-select"><option value="M" {% if student.sex=='M' %}selected{% endif %}>M</option><option value="F" {% if student.sex=='F' %}selected{% endif %}>F</option></select></div>
+        <div class="col-md-3 mb-2"><label style="color:#000080;">DOB</label><input type="date" name="dob" class="form-control" value="{{ student.dob }}"></div>
+        <div class="col-md-2 mb-2"><label style="color:#000080;">Stream</label><input type="text" name="stream" class="form-control" value="{{ student.stream }}"></div>
+        <div class="col-md-2 mb-2"><label style="color:#000080;">Combination</label><input type="text" name="combination" class="form-control" value="{{ student.combination or '' }}"></div>
+        <div class="col-md-3 mb-2"><label style="color:#000080;">Curriculum</label><select name="curriculum" class="form-select"><option value="new" {% if student.curriculum=='new' %}selected{% endif %}>New</option><option value="old" {% if student.curriculum=='old' %}selected{% endif %}>Old</option></select></div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-2"><label style="color:#000080;">Optional Subjects</label><input type="text" name="optional_subjects" class="form-control" value="{{ student.optional_subjects or '' }}"></div>
+        <div class="col-md-6 mb-2"><label style="color:#000080;">Parent Phone</label><input type="text" name="parent_phone" class="form-control" value="{{ student.parent_phone or '' }}"></div>
+    </div>
+    
+    <div class="mt-3 p-3" style="border:2px solid #000080; background-color:#FFFFF0;">
+        <h5 style="color:#800080;">📋 Auto-Detected Subjects</h5>
+        <p style="color:#000080;">Class: {{ student.current_class }} | Curriculum: {{ student.curriculum }} | Combination: {{ student.combination or 'N/A' }}</p>
+        <div class="row">
+            {% for subj in subjects %}
+            <div class="col-md-4 mb-1">
+                {% if subj.code in expected_codes %}
+                <span style="color:green;font-weight:bold;">✅ {{ subj.necta_code }} - {{ subj.name }}</span>
+                {% else %}
+                <span style="color:#ccc;">⬜ {{ subj.necta_code }} - {{ subj.name }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary mt-3" style="background-color:#000080;">💾 Save & Auto-Assign</button>
+    <a href="{{ url_for('registry') }}" class="btn btn-secondary mt-3">Cancel</a>
+</form>
+{% endblock %}

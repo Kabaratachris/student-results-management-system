@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Public Results - {{ exam.target_class }}</title>
+    <style>
+        body { 
+            background-color: #B0E0E6; 
+            font-family: Arial; 
+            font-size: 9px; 
+            margin: 20px;
+        }
+        .header { 
+            text-align: center; 
+            background-color: #ADD8E6; 
+            padding: 8px; 
+            border: 1px solid #000080; 
+            margin-bottom: 10px; 
+        }
+        .header h6, .header h5 { color: #800080; margin: 2px 0; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background-color: #FFFFF0; 
+            margin-bottom: 10px; 
+        }
+        th, td { 
+            border: 1px solid #000080; 
+            padding: 4px; 
+            text-align: center; 
+            color: #000080; 
+            font-size: 8px;
+        }
+        th { background-color: #E8E8D0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 20px; color: #000080; font-size: 8px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h6>{{ school_info.country }}</h6>
+        <h6>{{ school_info.ministry }}</h6>
+        <h6>{{ school_info.region }}</h6>
+        <h6>{{ school_info.district }}</h6>
+        <h5>S3560 UCHILE SECONDARY SCHOOL</h5>
+        <h5>{{ get_class_number(exam.target_class) }}</h5>
+        <h5>{{ get_exam_type_label(exam.exam_type) }}</h5>
+        <h6>{{ exam.month_year_label }}</h6>
+        <h6 style="color: #000080;">PUBLIC RESULTS - CNO ONLY (NO NAMES)</h6>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>REGISTERED</th><th>SAT</th>
+                <th>DIV I</th><th>DIV II</th><th>DIV III</th><th>DIV IV</th><th>0</th><th>PASSED</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ total_registered }}</td><td>{{ sat_count }}</td>
+                <td>{{ div_counts['I'] }}</td><td>{{ div_counts['II'] }}</td>
+                <td>{{ div_counts['III'] }}</td><td>{{ div_counts['IV'] }}</td>
+                <td>{{ div_counts['0'] }}</td><td>{{ total_passed }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table>
+        <thead>
+            <tr>
+                <th>CNO</th><th>SEX</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in results_data %}
+            <tr>
+                <td>{{ row.cno }}</td>
+                <td>{{ row.sex }}</td>
+                <td>{{ row.result.agg if row.result else '-' }}</td>
+                <td>{{ row.result.division if row.result else '-' }}</td>
+                <td style="font-size: 7px;">{{ row.detailed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>This is a public results document. Student names are not displayed for privacy.</p>
+        <p>Generated: {{ exam.month_year_label }}</p>
+    </div>
+</body>
+</html>

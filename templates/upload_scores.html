@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>UPLOAD SCORES</h5>
+</div>
+
+<div class="card mb-3" style="border: 1px solid #000080;">
+    <div class="card-body" style="background-color: #FFFFF0;">
+        <h6 style="color:#800080;">Exam Details:</h6>
+        <table class="table table-sm" style="max-width: 400px;">
+            <tr><th style="width:150px;">Exam Name:</th><td>{{ exam.name }}</td></tr>
+            <tr><th>Class:</th><td>{{ exam.target_class }}</td></tr>
+            <tr><th>Type:</th><td>{{ exam.exam_type }}</td></tr>
+            <tr><th>Date:</th><td>{{ exam.date.strftime('%d-%m-%Y') if exam.date else '' }}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="{{ url_for('download_scores_template', exam_id=exam.id) }}" class="btn btn-info">
+        📥 Download Scores Template
+    </a>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label style="color:#000080; font-weight:bold;">Upload Completed CSV File *</label>
+        <input type="file" name="file" class="form-control" accept=".csv" required>
+    </div>
+    <button type="submit" class="btn btn-primary" style="background-color:#000080; border-color:#000080;">
+        Upload Scores
+    </button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h6>{{ school_info.country }}</h6>
+    <h6>{{ school_info.ministry }}</h6>
+    <h6>{{ school_info.region }}</h6>
+    <h6>{{ school_info.district }}</h6>
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>{{ get_class_number(exam.target_class) }}</h5>
+    <h5>{{ get_exam_type_label(exam.exam_type) }}</h5>
+    <h6>{{ exam.month_year_label }}</h6>
+</div>
+
+<!-- Division Summary -->
+<div class="school-title-banner"><h5>DIVISION PERFORMANCE SUMMARY</h5></div>
+<table class="table table-bordered table-sm text-center">
+    <thead>
+        <tr><th>SEX</th><th>REGIST</th><th>ABS</th><th>SAT</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>0</th><th>PASSED</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>F</strong></td>
+            <td>{{ total_reg_f }}</td><td>{{ abs_f }}</td><td>{{ sat_f }}</td>
+            <td>{{ div_counts['I']['F'] }}</td><td>{{ div_counts['II']['F'] }}</td>
+            <td>{{ div_counts['III']['F'] }}</td><td>{{ div_counts['IV']['F'] }}</td>
+            <td>{{ div_counts['0']['F'] }}</td><td>{{ passed_f }}</td>
+        </tr>
+        <tr>
+            <td><strong>M</strong></td>
+            <td>{{ total_reg_m }}</td><td>{{ abs_m }}</td><td>{{ sat_m }}</td>
+            <td>{{ div_counts['I']['M'] }}</td><td>{{ div_counts['II']['M'] }}</td>
+            <td>{{ div_counts['III']['M'] }}</td><td>{{ div_counts['IV']['M'] }}</td>
+            <td>{{ div_counts['0']['M'] }}</td><td>{{ passed_m }}</td>
+        </tr>
+        <tr>
+            <td><strong>TOTAL</strong></td>
+            <td>{{ total_registered }}</td><td>{{ abs_count }}</td><td>{{ sat_count }}</td>
+            <td>{{ div_counts['I']['T'] }}</td><td>{{ div_counts['II']['T'] }}</td>
+            <td>{{ div_counts['III']['T'] }}</td><td>{{ div_counts['IV']['T'] }}</td>
+            <td>{{ div_counts['0']['T'] }}</td><td>{{ total_passed }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- Overall School Performance -->
+<h5 style="color:#800080;">OVERALL SCHOOL PERFORMANCE</h5>
+<table class="table table-bordered table-sm text-center">
+    <tr><th>REGISTERED</th><th>SAT</th><th>TOTAL PASSED</th><th>OVERALL GPA</th></tr>
+    <tr><td>{{ total_registered }}</td><td>{{ sat_count }}</td><td>{{ total_passed }}</td><td>{{ overall_gpa }}</td></tr>
+</table>
+
+<!-- Student Results - WITH FULL NAMES -->
+<h5 style="color:#800080;">STUDENT RESULTS</h5>
+<div class="table-responsive">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>CNO</th>
+                <th>SEX</th>
+                <th>FULL NAME</th>
+                <th>AGGT</th>
+                <th>DIV</th>
+                <th>DETAILED SUBJECTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sr in student_results %}
+            <tr>
+                <td>{{ sr.student.cno }}</td>
+                <td>{{ sr.student.sex }}</td>
+                <td>{{ sr.full_name }}</td>
+                <td>{{ sr.result.agg if sr.result else '-' }}</td>
+                <td style="font-weight:bold;">{{ sr.result.division if sr.result else '-' }}</td>
+                <td style="font-size:11px;">{{ sr.detailed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Detailed Subject Performance - NAMES LEFT ALIGNED -->
+<h5 style="color:#800080;">DETAILED SUBJECT PERFORMANCE</h5>
+<div class="table-responsive">
+    <table class="table table-bordered table-sm text-center">
+        <thead>
+            <tr>
+                <th>S/N</th>
+                <th>CODE</th>
+                <th style="text-align:left;">SUBJECT NAME</th>
+                <th>REGIST</th>
+                <th>SAT</th>
+                {% if level == 'O' %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                {% else %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
+                {% endif %}
+                <th>TOTAL PASSED</th>
+                <th>GPA</th>
+                <th>COMPETENCE LEVEL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in subject_performance %}
+            <tr>
+                <td>{{ sp.sn }}</td>
+                <td>{{ sp.necta_code }}</td>
+                <td style="text-align:left;">{{ sp.name }}</td>
+                <td>{{ sp.regist_total }}</td>
+                <td>{{ sp.sat }}</td>
+                {% if level == 'O' %}
+                <td>{{ sp.grades['A'] }}</td>
+                <td>{{ sp.grades['B'] }}</td>
+                <td>{{ sp.grades['C'] }}</td>
+                <td>{{ sp.grades['D'] }}</td>
+                <td>{{ sp.grades['F'] }}</td>
+                {% else %}
+                <td>{{ sp.grades['A'] }}</td>
+                <td>{{ sp.grades['B'] }}</td>
+                <td>{{ sp.grades['C'] }}</td>
+                <td>{{ sp.grades['D'] }}</td>
+                <td>{{ sp.grades['E'] }}</td>
+                <td>{{ sp.grades['S'] }}</td>
+                <td>{{ sp.grades['F'] }}</td>
+                {% endif %}
+                <td>{{ sp.total_passed }}</td>
+                <td>{{ sp.gpa }}</td>
+                <td style="background-color:{{ sp.competence_color }};color:white;font-weight:bold;">
+                    {{ sp.competence_label }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="no-print mt-3">
+    <button onclick="window.print()" class="btn btn-secondary">🖨️ Print</button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">← Back to Dashboard</a>
+</div>
+{% endblock %}

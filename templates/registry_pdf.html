@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registry - {{ class_name }}</title>
+    <style>
+        body { 
+            background-color: #B0E0E6; 
+            font-family: Arial; 
+            font-size: 9px; 
+            margin: 20px;
+        }
+        .header { 
+            text-align: center; 
+            background-color: #ADD8E6; 
+            padding: 8px; 
+            border: 1px solid #000080; 
+            margin-bottom: 10px; 
+        }
+        .header h6, .header h5, .header h4 { color: #800080; margin: 2px 0; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background-color: #FFFFF0; 
+            margin-bottom: 10px; 
+        }
+        th, td { 
+            border: 1px solid #000080; 
+            padding: 3px; 
+            text-align: center; 
+            color: #000080; 
+            font-size: 8px;
+        }
+        th { background-color: #E8E8D0; font-weight: bold; }
+        .check { color: green; font-weight: bold; }
+        .cross { color: red; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h6>{{ school_info.country }}</h6>
+        <h6>{{ school_info.ministry }}</h6>
+        <h6>{{ school_info.region }}</h6>
+        <h6>{{ school_info.district }}</h6>
+        <h5>S3560 UCHILE SECONDARY SCHOOL</h5>
+        <h5>STUDENT REGISTRY - {{ class_name }}</h5>
+        <h6>Total Students: {{ students|length }}</h6>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>CNO</th>
+                <th>FULL NAME</th>
+                <th>SEX</th>
+                <th>STREAM</th>
+                {% for subj in subjects %}
+                <th>{{ subj.necta_code }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for stu in students %}
+            <tr>
+                <td>{{ stu.cno }}</td>
+                <td>{{ stu.first_name }} {{ stu.middle_name or '' }} {{ stu.last_name }}</td>
+                <td>{{ stu.sex }}</td>
+                <td>{{ stu.stream }}</td>
+                {% for subj in subjects %}
+                <td>
+                    {% if subj.code in reg_data.get(stu.id, []) %}
+                    <span class="check">✔</span>
+                    {% else %}
+                    <span class="cross">-</span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

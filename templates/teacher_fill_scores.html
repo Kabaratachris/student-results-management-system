@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>FILL SCORES</h5>
+</div>
+
+<div class="card mb-3" style="border:1px solid #000080;">
+    <div class="card-body" style="background-color:#FFFFF0;">
+        <p><strong>Exam:</strong> {{ exam.name }} | <strong>Class:</strong> {{ exam.target_class }} | <strong>Date:</strong> {{ exam.date.strftime('%d-%m-%Y') if exam.date else '' }}</p>
+    </div>
+</div>
+
+<form method="POST">
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>CNO</th><th>Name</th><th>Sex</th>
+                    {% for subj in subjects %}<th>{{ subj.code }}</th>{% endfor %}
+                    <th>Behavior</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stu in students %}
+                <tr>
+                    <td>{{ stu.cno }}</td>
+                    <td>{{ stu.first_name }} {{ stu.middle_name or '' }} {{ stu.last_name }}</td>
+                    <td>{{ stu.sex }}</td>
+                    {% for subj in subjects %}
+                    <td>
+                        <input type="number" name="marks_{{ stu.id }}_{{ subj.id }}" class="form-control form-control-sm" style="width:60px;" value="{{ marks_data.get((stu.id, subj.id), '') }}" step="0.5" min="0" max="100">
+                    </td>
+                    {% endfor %}
+                    <td><input type="text" name="behavior_{{ stu.id }}" class="form-control form-control-sm" style="width:120px;" value="{{ behavior_data.get(stu.id, '') }}"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-primary" style="background-color:#000080;">Save Scores</button>
+    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

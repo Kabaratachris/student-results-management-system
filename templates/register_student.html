@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>REGISTER NEW STUDENT</h5>
+</div>
+
+<form method="POST">
+    <div class="row">
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">First Name *</label>
+            <input type="text" name="first_name" class="form-control" required>
+        </div>
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">Middle Name *</label>
+            <input type="text" name="middle_name" class="form-control" required>
+        </div>
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">Last Name *</label>
+            <input type="text" name="last_name" class="form-control" required>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2 mb-2">
+            <label style="color:#000080; font-weight:bold;">Sex *</label>
+            <select name="sex" class="form-select" required><option value="M">Male</option><option value="F">Female</option></select>
+        </div>
+        <div class="col-md-3 mb-2">
+            <label style="color:#000080; font-weight:bold;">DOB</label>
+            <input type="date" name="dob" class="form-control">
+        </div>
+        <div class="col-md-2 mb-2">
+            <label style="color:#000080; font-weight:bold;">Stream</label>
+            <input type="text" name="stream" class="form-control" placeholder="Default: A">
+        </div>
+        <div class="col-md-2 mb-2">
+            <label style="color:#000080; font-weight:bold;">Combination</label>
+            <input type="text" name="combination" class="form-control" placeholder="PCM, PCB...">
+        </div>
+        <div class="col-md-3 mb-2">
+            <label style="color:#000080; font-weight:bold;">Class *</label>
+            <select name="current_class" class="form-select" required>
+                {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">Curriculum *</label>
+            <select name="curriculum" class="form-select" required>
+                <option value="new">New Curriculum (F1-F2)</option>
+                <option value="old">Old Curriculum (F3-F4)</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">Optional Subjects</label>
+            <input type="text" name="optional_subjects" class="form-control" placeholder="PHY,CHEM,BIO">
+        </div>
+        <div class="col-md-4 mb-2">
+            <label style="color:#000080; font-weight:bold;">Parent Phone</label>
+            <input type="text" name="parent_phone" class="form-control">
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="background-color:#000080;">Register Student</button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

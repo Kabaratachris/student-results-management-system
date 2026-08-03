@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>STUDENT REGISTRY</h5>
+</div>
+
+<form method="POST" class="mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <select name="class_name" class="form-select" onchange="this.form.submit()">
+                {% for c in classes %}<option value="{{ c }}" {% if c==selected_class %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button onclick="window.print()" class="btn btn-danger" type="button">🖨️ Print</button>
+            <a href="{{ url_for('register_student') }}" class="btn btn-success">➕ Register</a>
+        </div>
+    </div>
+</form>
+
+{% if students %}
+<div class="table-responsive">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>CNO</th><th>FULL NAME</th><th>SEX</th><th>STREAM</th>
+                {% for subj in subjects %}<th>{{ subj.necta_code }}</th>{% endfor %}
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stu in students %}
+            <tr>
+                <td>{{ stu.cno }}</td>
+                <td>{{ stu.first_name }} {{ stu.middle_name or '' }} {{ stu.last_name }}</td>
+                <td>{{ stu.sex }}</td>
+                <td>{{ stu.stream }}</td>
+                {% for subj in subjects %}
+                <td class="text-center">
+                    {% if subj.code in reg_data.get(stu.id, []) %}
+                    <span style="color:green;font-weight:bold;">✔</span>
+                    {% else %}<span style="color:red;">-</span>{% endif %}
+                </td>
+                {% endfor %}
+                <td>
+                    <a href="{{ url_for('edit_student', student_id=stu.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{{ url_for('delete_student', student_id=stu.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Del</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p style="color:#000080;">No students in {{ selected_class }}.</p>
+{% endif %}
+{% endblock %}

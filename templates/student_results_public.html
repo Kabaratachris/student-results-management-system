@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="no-print mb-3">
+    <a href="{{ url_for('student_view') }}" class="btn btn-secondary">← Back to Class Results</a>
+    <a href="{{ url_for('student_view_individual') }}" class="btn btn-outline-secondary">Search by CNO</a>
+</div>
+
+{% for exam_data in exams %}
+<div class="school-title-banner">
+    <h6>{{ school_info.country }}</h6>
+    <h6>{{ school_info.ministry }}</h6>
+    <h6>{{ school_info.region }}</h6>
+    <h6>{{ school_info.district }}</h6>
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>{{ get_class_number(exam_data.exam.target_class) if exam_data.exam else '' }}</h5>
+    <h5>{{ get_exam_type_label(exam_data.exam.exam_type) if exam_data.exam else '' }}</h5>
+    <h6>{{ exam_data.exam.month_year_label if exam_data.exam else '' }}</h6>
+</div>
+
+<table class="table table-bordered table-sm" style="max-width: 600px; margin: 0 auto;">
+    <tr><th style="width: 150px;">CNO</th><td>{{ exam_data.student.cno if exam_data.student else student.cno }}</td></tr>
+    <tr><th>SEX</th><td>{{ exam_data.student.sex if exam_data.student else student.sex }}</td></tr>
+    <tr><th>AGGT</th><td>{{ exam_data.result.agg if exam_data.result else 'N/A' }}</td></tr>
+    <tr><th>DIVISION</th><td>{{ exam_data.result.division if exam_data.result else 'N/A' }}</td></tr>
+    <tr><th>DETAILED SUBJECTS</th><td>{{ exam_data.detailed }}</td></tr>
+</table>
+
+<div class="no-print mt-3 text-center">
+    <a href="{{ url_for('student_results_pdf', student_id=student.id, exam_id=exam_data.exam.id) }}" 
+       class="btn btn-danger" target="_blank">Download PDF</a>
+    <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div>
+
+{% if not loop.last %}<hr>{% endif %}
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="school-title-banner">
+            <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+            <h6>STUDENT RESULTS MANAGEMENT SYSTEM</h6>
+        </div>
+        <h4 class="text-center mb-3" style="color:#800080;">STAFF LOGIN</h4>
+        <form method="POST">
+            <div class="mb-3">
+                <label style="color:#000080; font-weight:bold;">Username</label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label style="color:#000080; font-weight:bold;">Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label style="color:#000080; font-weight:bold;">Login As</label>
+                <select name="role" class="form-select" required>
+                    <option value="admin">Admin</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" style="background-color:#000080; border-color:#000080;">Login</button>
+        </form>
+        <div class="text-center mt-3 p-3" style="background-color: #FFFFF0; border: 2px solid #000080; border-radius: 5px;">
+            <h6 style="color: #800080;">STUDENT / PARENT PORTAL</h6>
+            <p style="color: #000080; font-size: 14px;">No login required.</p>
+            <a href="{{ url_for('student_view') }}" class="btn btn-success w-100" style="background-color: #006400;">View Public Results</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

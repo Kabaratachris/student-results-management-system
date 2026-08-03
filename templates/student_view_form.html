@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h6>{{ school_info.country }}</h6>
+    <h6>{{ school_info.ministry }}</h6>
+    <h6>{{ school_info.region }}</h6>
+    <h6>{{ school_info.district }}</h6>
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>PUBLIC RESULTS PORTAL</h5>
+    <h6 style="color:#000080;">(No Login Required - CNO Only Displayed)</h6>
+</div>
+
+<form method="POST" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label style="color:#000080;font-weight:bold;">Select Class</label>
+        <select name="class_name" class="form-select" required>
+            <option value="">-- Choose Class --</option>
+            {% for c in classes %}
+            <option value="{{ c }}" {% if selected_class==c %}selected{% endif %}>{{ get_class_number(c) }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label style="color:#000080;font-weight:bold;">Exam Type</label>
+        <select name="exam_type" class="form-select" required>
+            <option value="">-- Choose Type --</option>
+            {% for code,label in exam_types %}
+            <option value="{{ code }}" {% if selected_exam_type==code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label style="color:#000080;font-weight:bold;">Year</label>
+        <select name="year" class="form-select" required>
+            <option value="">-- Choose Year --</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if selected_year==y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12 text-center">
+        <button type="submit" class="btn btn-primary" style="background-color:#000080;padding:10px 40px;font-size:16px;">
+            View Results
+        </button>
+    </div>
+</form>
+
+{% if results_data and exam %}
+<div class="school-title-banner">
+    <h5>{{ get_class_number(exam.target_class) }}</h5>
+    <h5>{{ get_exam_type_label(exam.exam_type) }}</h5>
+    <h6>{{ exam.month_year_label }}</h6>
+</div>
+
+<!-- Division Summary -->
+<div class="school-title-banner"><h5>PERFORMANCE SUMMARY</h5></div>
+<table class="table table-bordered table-sm text-center">
+    <thead>
+        <tr><th>REGISTERED</th><th>SAT</th><th>DIV I</th><th>DIV II</th><th>DIV III</th><th>DIV IV</th><th>0</th><th>PASSED</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            {% set total = results_data|length %}
+            {% set sat = results_data|selectattr('result')|selectattr('result.division','ne','ABS')|list|length %}
+            {% set div1 = results_data|selectattr('result')|selectattr('result.division','equalto','I')|list|length %}
+            {% set div2 = results_data|selectattr('result')|selectattr('result.division','equalto','II')|list|length %}
+            {% set div3 = results_data|selectattr('result')|selectattr('result.division','equalto','III')|list|length %}
+            {% set div4 = results_data|selectattr('result')|selectattr('result.division','equalto','IV')|list|length %}
+            {% set div0 = results_data|selectattr('result')|selectattr('result.division','equalto','0')|list|length %}
+            {% set passed = div1 + div2 + div3 + div4 %}
+            <td>{{ total }}</td><td>{{ sat }}</td>
+            <td>{{ div1 }}</td><td>{{ div2 }}</td><td>{{ div3 }}</td><td>{{ div4 }}</td><td>{{ div0 }}</td><td>{{ passed }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- Results Table - CNO ONLY, NO NAMES -->
+<h5 style="color:#800080;">STUDENT RESULTS (CNO Only - No Names)</h5>
+<div class="table-responsive">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>CNO</th>
+                <th>SEX</th>
+                <th>AGGT</th>
+                <th>DIV</th>
+                <th>DETAILED SUBJECTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in results_data %}
+            <tr>
+                <td>{{ row.cno }}</td>
+                <td>{{ row.sex }}</td>
+                <td>{{ row.result.agg if row.result else '-' }}</td>
+                <td style="font-weight:bold;">{{ row.result.division if row.result else '-' }}</td>
+                <td style="font-size:11px;">{{ row.detailed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Subject Performance - Names LEFT ALIGNED -->
+<h5 style="color:#800080;">DETAILED SUBJECT PERFORMANCE</h5>
+<div class="table-responsive">
+    <table class="table table-bordered table-sm text-center">
+        <thead>
+            <tr>
+                <th>S/N</th>
+                <th>CODE</th>
+                <th style="text-align:left;">SUBJECT NAME</th>
+                <th>REGIST</th>
+                <th>SAT</th>
+                {% if level == 'O' %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                {% else %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
+                {% endif %}
+                <th>PASSED</th>
+                <th>GPA</th>
+                <th>COMPETENCE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in subject_performance %}
+            <tr>
+                <td>{{ sp.sn }}</td>
+                <td>{{ sp.necta_code }}</td>
+                <td style="text-align:left;">{{ sp.name }}</td>
+                <td>{{ sp.regist_total }}</td>
+                <td>{{ sp.sat }}</td>
+                {% if level == 'O' %}
+                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td><td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td><td>{{ sp.grades['F'] }}</td>
+                {% else %}
+                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td><td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td><td>{{ sp.grades['E'] }}</td><td>{{ sp.grades['S'] }}</td><td>{{ sp.grades['F'] }}</td>
+                {% endif %}
+                <td>{{ sp.total_passed }}</td>
+                <td>{{ sp.gpa }}</td>
+                <td style="background-color:{{ sp.competence_color }};color:white;font-weight:bold;">{{ sp.competence_label }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="no-print text-center mt-3">
+    <button onclick="window.print()" class="btn btn-secondary">🖨️ Print</button>
+</div>
+{% elif request.method == 'POST' %}
+<div class="alert alert-warning text-center" style="color:#800080;">
+    <p>No results found for the selected criteria. Please try different options.</p>
+</div>
+{% endif %}
+{% endblock %}

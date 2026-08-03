@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="school-title-banner">
+    <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
+    <h5>PROMOTE STUDENTS</h5>
+</div>
+
+<div class="alert alert-warning" style="color:#000080;">
+    ⚠️ F1-F3 & F5: After Annual Exam | F4 & F6: After Pre-Necta
+</div>
+
+<form method="POST">
+    <div class="mb-3">
+        <label style="color:#000080;font-weight:bold;">Select Class</label>
+        <select name="class_name" class="form-select" required>
+            <option value="">-- Choose --</option>
+            {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-success">Promote</button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
