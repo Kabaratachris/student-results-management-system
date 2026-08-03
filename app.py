@@ -167,14 +167,49 @@ def process_student_results(student_id, exam_id):
 # CNO
 # -------------------------------------------------------------------
 def reassign_cno(class_name, school_prefix='S3560'):
-    students = Student.query.filter_by(current_class=class_name, is_deleted=False).order_by(Student.id).all()
+    """Reassign CNOs for a specific class only.
+    O-Level (Form1-4): Each class starts from 0001
+    A-Level (Form5-6): Each class starts from 0501
+    Each class has its own independent numbering.
+    """
+    # Get only students in THIS class
+    students = Student.query.filter_by(
+        current_class=class_name,
+        is_deleted=False
+    ).order_by(Student.id).all()
+    
+    # Set starting number based on level
     if class_name in ['Form5', 'Form6']:
         start_number = 501
     else:
         start_number = 1
-    for idx, s in enumerate(students):
-        s.cno = f"{school_prefix}-{start_number + idx:04d}"
+    
+    # Find highest existing CNO in THIS class only
+    highest = start_number - 1
+    for s in students:
+        if s.cno:
+            try:
+                num = int(s.cno.split('-')[1])
+                if num > highest:
+                    highest = num
+            except:
+                pass
+    
+    if highest >= start_number:
+        start_number = highest + 1
+    
+    # Reassign CNOs only to students without CNO or with gaps
+    current = start_number
+    for s in students:
+        if not s.cno:
+            s.cno = f"{school_prefix}-{current:04d}"
+            current += 1
+    
     db.session.commit()
+    
+    # Print summary
+    count = len([s for s in students if s.cno])
+    print(f"{class_name}: CNOs from {school_prefix}-{start_number:04d} to {school_prefix}-{current-1:04d} ({count} students)")
 
 # -------------------------------------------------------------------
 # Display Helpers
