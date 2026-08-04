@@ -13,8 +13,11 @@ from models import (db, User, Student, Subject, Exam, StudentSubject,
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///school.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+import os
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///school.db')
+if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URLapp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 login_manager = LoginManager()

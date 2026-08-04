@@ -6,3 +6,4 @@ pandas
 openpyxl
 xhtml2pdf
 gunicorn
+psycopg2-binary
