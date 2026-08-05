@@ -13,6 +13,7 @@ from models import (db, User, Student, Subject, Exam, StudentSubject,
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-in-production'
+port = int(os.environ.get('PORT', 5000))
 
 import os
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -1174,4 +1175,5 @@ def all_students_list():
 # Run
 # -------------------------------------------------------------------
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
