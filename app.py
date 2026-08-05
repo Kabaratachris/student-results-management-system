@@ -15,14 +15,15 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-in-production'
 
 import os
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///school.db'
-
+    raise RuntimeError("DATABASE_URL environment variable is not set!")
+    
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+print(f"Database: PostgreSQL connected")
 db.init_app(app)
 
 login_manager = LoginManager()
