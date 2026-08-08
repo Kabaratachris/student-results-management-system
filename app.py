@@ -559,6 +559,26 @@ def bulk_upload():
             success = 0
             errors = 0
             
+            # Find starting CNO for this class
+            if class_name in ['Form5', 'Form6']:
+                start = 501
+            else:
+                start = 1
+            
+            # Find highest existing CNO
+            existing = Student.query.filter_by(
+                current_class=class_name,
+                is_deleted=False
+            ).order_by(Student.cno.desc()).first()
+            
+            if existing and existing.cno and existing.cno.startswith('S3560-'):
+                try:
+                    num = int(existing.cno.split('-')[1])
+                    if num >= start:
+                        start = num + 1
+                except:
+                    pass
+            
             for _, row in df.iterrows():
                 try:
                     first_name = str(row.get('first_name', '')).strip()
@@ -569,31 +589,18 @@ def bulk_upload():
                         errors += 1
                         continue
                     
-                    dob_str = str(row.get('dob', '')).strip()
-                    dob = None
-                    if dob_str and dob_str.lower() != 'nan' and dob_str != '':
-                        try:
-                            dob = datetime.strptime(dob_str, '%Y-%m-%d')
-                        except:
-                            pass
-                    
-                    stream = str(row.get('stream', '')).strip() or 'A'
-                    combination = str(row.get('combination', '')).strip().upper()
-                    curriculum = str(row.get('curriculum', 'old')).strip().lower()
-                    optional_subjects = str(row.get('optional_subjects', '')).strip()
-                    
                     student = Student(
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
                         sex=str(row.get('sex', 'M')).strip().upper(),
-                        dob=dob,
-                        stream=stream,
-                        combination=combination,
-                        curriculum=curriculum,
-                        optional_subjects=optional_subjects,
+                        stream=str(row.get('stream', '')).strip() or 'A',
+                        combination=str(row.get('combination', '')).strip().upper(),
+                        curriculum=str(row.get('curriculum', 'old')).strip().lower(),
+                        optional_subjects=str(row.get('optional_subjects', '')).strip(),
                         parent_phone=str(row.get('parent_phone', '')).strip(),
-                        current_class=class_name
+                        current_class=class_name,
+                        cno=f"S3560-{start:04d}"
                     )
                     db.session.add(student)
                     db.session.flush()
@@ -601,11 +608,13 @@ def bulk_upload():
                     # Auto-assign subjects
                     level = 'A' if class_name in ['Form5', 'Form6'] else 'O'
                     if level == 'O':
-                        compulsory = get_compulsory_subjects(curriculum, 'O')
-                        optional = [s.strip() for s in optional_subjects.split(',') if s.strip()] if optional_subjects else []
+                        compulsory = get_compulsory_subjects(str(row.get('curriculum', 'old')).strip().lower(), 'O')
+                        opt = str(row.get('optional_subjects', '')).strip()
+                        optional = [s.strip() for s in opt.split(',') if s.strip()] if opt else []
                         all_codes = compulsory + optional
                     else:
-                        all_codes = get_combination_subjects(combination) + get_subsidiary_subjects(combination)
+                        comb = str(row.get('combination', '')).strip().upper()
+                        all_codes = get_combination_subjects(comb) + get_subsidiary_subjects(comb)
                     
                     for code in all_codes:
                         subj = Subject.query.filter_by(code=code, level=level).first()
@@ -615,6 +624,7 @@ def bulk_upload():
                                 subject_id=subj.id
                             ))
                     
+                    start += 1
                     success += 1
                     
                 except Exception as e:
@@ -623,55 +633,15 @@ def bulk_upload():
                     continue
             
             db.session.commit()
-            
-            # Assign CNOs ONLY to new students without CNO
-            if class_name in ['Form5', 'Form6']:
-                start = 501
-            else:
-                start = 1
-            
-            # Find highest CNO in this class
-            students_in_class = Student.query.filter_by(
-                current_class=class_name,
-                is_deleted=False
-            ).order_by(Student.id).all()
-            print(f"DEBUG: Found {len(students_in_class)} students in class {class_name}")
-
-            for s in students_in_class[:5]:  # Print first 5
-                print(f"  Student ID={s.id}, CNO='{s.cno}', Name={s.first_name}")
-            for s in students_in_class:
-                if s.cno and s.cno.startswith('S3560-'):
-                    try:
-                        num = int(s.cno.split('-')[1])
-                        if num >= start:
-                            start = num + 1
-                    except:
-                        pass
-            
-                        # Assign to students with no CNO
-            cno_assigned = 0
-            for s in students_in_class:
-                # Check if CNO is missing or empty
-                if s.cno is None or str(s.cno).strip() == '' or s.cno == '':
-                    s.cno = f"S3560-{start:04d}"
-                    start += 1
-                    cno_assigned += 1
-                    print(f"Assigned CNO {s.cno} to student {s.id}")
-            
-            print(f"Total CNOs assigned: {cno_assigned}")
-            
-            if cno_assigned > 0:
-                db.session.commit()
-            
-            flash(f'Successfully uploaded {success} students to {class_name}. {cno_assigned} CNOs assigned.')
+            flash(f'Uploaded {success} students to {class_name}.')
             if errors > 0:
-                flash(f'{errors} rows skipped due to errors.', 'warning')
+                flash(f'{errors} rows skipped.', 'warning')
             
             return redirect(url_for('admin_dashboard'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error uploading students: {str(e)}')
+            flash(f'Error: {str(e)}')
             print(f"Upload error: {e}")
     
     classes = ['Form1', 'Form2', 'Form3', 'Form4', 'Form5', 'Form6']
