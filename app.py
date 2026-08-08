@@ -505,12 +505,34 @@ def register_student():
             
             db.session.commit()
             
-            # Auto-assign CNO if student has none
+            # Auto-assign CNO for THIS new student only
             if not student.cno or str(student.cno).strip() == '':
-                reassign_cno(student.current_class)
+                if class_name in ['Form5', 'Form6']:
+                    start = 501
+                else:
+                    start = 1
+                
+                # Find highest CNO in class
+                students_in_class = Student.query.filter_by(
+                    current_class=student.current_class,
+                    is_deleted=False
+                ).order_by(Student.id).all()
+                
+                for s in students_in_class:
+                    if s.cno and s.cno.startswith('S3560-'):
+                        try:
+                            num = int(s.cno.split('-')[1])
+                            if num >= start:
+                                start = num + 1
+                        except:
+                            pass
+                
+                student.cno = f"S3560-{start:04d}"
+                db.session.commit()
             
-            flash('Student registered successfully with subjects and CNO auto-assigned.')
+            flash('Student registered successfully.')
             return redirect(url_for('admin_dashboard'))
+
             flash('Student registered.')
             return redirect(url_for('registry'))
         except Exception as e:
@@ -1186,20 +1208,40 @@ def all_students_list():
 # -------------------------------------------------------------------
 # Reassign CNOs for a Class
 # -------------------------------------------------------------------
-@app.route('/reassign_cno/<class_name>')
-@login_required
-def reassign_cno_route(class_name):
-    if current_user.role != 'admin':
-        abort(403)
-    
-    count = reassign_cno(class_name)
-    
-    if count > 0:
-        flash(f'{count} CNOs assigned in {class_name} (Female A-Z, Male A-Z).')
+def reassign_cno(class_name, school_prefix='S3560'):
+    """Assign CNOs ONLY to students who don't have one."""
+    if class_name in ['Form5', 'Form6']:
+        start = 501
     else:
-        flash(f'All students in {class_name} already have CNOs.')
+        start = 1
     
-    return redirect(url_for('registry'))
+    # Find highest CNO in class
+    students_in_class = Student.query.filter_by(
+        current_class=class_name,
+        is_deleted=False
+    ).order_by(Student.id).all()
+    
+    for s in students_in_class:
+        if s.cno and s.cno.startswith(f'{school_prefix}-'):
+            try:
+                num = int(s.cno.split('-')[1])
+                if num >= start:
+                    start = num + 1
+            except:
+                pass
+    
+    # Assign ONLY to students with NULL/empty CNO
+    assigned = 0
+    for s in students_in_class:
+        if s.cno is None or str(s.cno).strip() == '':
+            s.cno = f"{school_prefix}-{start:04d}"
+            start += 1
+            assigned += 1
+    
+    if assigned > 0:
+        db.session.commit()
+    
+    return assigned
 
 # -------------------------------------------------------------------
 # Delete All Students in a Class
