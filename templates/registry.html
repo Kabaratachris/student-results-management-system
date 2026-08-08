@@ -7,51 +7,65 @@
 
 <form method="POST" class="mb-3">
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <label style="color:#000080; font-weight:bold;">Select Class</label>
             <select name="class_name" class="form-select" onchange="this.form.submit()">
-                {% for c in classes %}<option value="{{ c }}" {% if c==selected_class %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                {% for c in classes %}
+                <option value="{{ c }}" {% if c == selected_class %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
             </select>
         </div>
-        <div class="col-md-8">
-    <button onclick="window.print()" class="btn btn-danger" type="button">🖨️ Print</button>
-    <a href="{{ url_for('register_student') }}" class="btn btn-success">➕ Register</a>
-    <a href="{{ url_for('reassign_cno_route', class_name=selected_class) }}" class="btn btn-warning">🔢 Reassign CNOs</a>
-    <a href="{{ url_for('delete_all_students', class_name=selected_class) }}" 
-       class="btn btn-danger" 
-       onclick="return confirm('DELETE ALL students in {{ selected_class }}? This cannot be undone!')">
-        🗑️ Delete All
-    </a>
-</div>
+        <div class="col-md-9">
+            <label style="color:#000080; font-weight:bold;">Actions</label><br>
+            <button onclick="window.print()" class="btn btn-danger" type="button">🖨️ Print</button>
+            <a href="{{ url_for('register_student') }}" class="btn btn-success">➕ Register</a>
+            <a href="{{ url_for('reassign_cno_route', class_name=selected_class) }}" class="btn btn-warning">🔢 Reassign CNOs</a>
+            <a href="{{ url_for('delete_all_students', class_name=selected_class) }}" 
+               class="btn btn-outline-danger" 
+               onclick="return confirm('DELETE ALL students in {{ selected_class }}? This moves them to trash.')">
+                🗑️ Delete All
+            </a>
+        </div>
     </div>
 </form>
 
 {% if students %}
+<p style="color:#000080;"><strong>Total Students:</strong> {{ students|length }}</p>
 <div class="table-responsive">
     <table class="table table-bordered table-sm">
         <thead>
             <tr>
-                <th>CNO</th><th>FULL NAME</th><th>SEX</th><th>STREAM</th>
-                {% for subj in subjects %}<th>{{ subj.necta_code }}</th>{% endfor %}
+                <th>CNO</th>
+                <th>FULL NAME</th>
+                <th>SEX</th>
+                <th>STREAM</th>
+                <th>CURRICULUM</th>
+                {% for subj in subjects %}
+                <th>{{ subj.necta_code }}</th>
+                {% endfor %}
                 <th>ACTIONS</th>
             </tr>
         </thead>
         <tbody>
             {% for stu in students %}
             <tr>
-                <td>{{ stu.cno }}</td>
+                <td>{{ stu.cno if stu.cno else '<span style="color:red;">No CNO</span>'|safe }}</td>
                 <td>{{ stu.first_name }} {{ stu.middle_name or '' }} {{ stu.last_name }}</td>
                 <td>{{ stu.sex }}</td>
                 <td>{{ stu.stream }}</td>
+                <td>{{ stu.curriculum }}</td>
                 {% for subj in subjects %}
                 <td class="text-center">
                     {% if subj.code in reg_data.get(stu.id, []) %}
                     <span style="color:green;font-weight:bold;">✔</span>
-                    {% else %}<span style="color:red;">-</span>{% endif %}
+                    {% else %}
+                    <span style="color:red;">-</span>
+                    {% endif %}
                 </td>
                 {% endfor %}
                 <td>
                     <a href="{{ url_for('edit_student', student_id=stu.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{{ url_for('delete_student', student_id=stu.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Del</a>
+                    <a href="{{ url_for('delete_student', student_id=stu.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Move to trash?')">Del</a>
                 </td>
             </tr>
             {% endfor %}
@@ -59,6 +73,9 @@
     </table>
 </div>
 {% else %}
-<p style="color:#000080;">No students in {{ selected_class }}.</p>
+<div class="alert alert-info" style="color: #000080;">
+    <p>No students registered in {{ selected_class }}.</p>
+    <a href="{{ url_for('register_student') }}" class="btn btn-primary">Register a Student</a>
+</div>
 {% endif %}
 {% endblock %}
