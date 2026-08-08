@@ -12,10 +12,16 @@
                 {% for c in classes %}<option value="{{ c }}" {% if c==selected_class %}selected{% endif %}>{{ c }}</option>{% endfor %}
             </select>
         </div>
-        <div class="col-md-4">
-            <button onclick="window.print()" class="btn btn-danger" type="button">🖨️ Print</button>
-            <a href="{{ url_for('register_student') }}" class="btn btn-success">➕ Register</a>
-        </div>
+        <div class="col-md-8">
+    <button onclick="window.print()" class="btn btn-danger" type="button">🖨️ Print</button>
+    <a href="{{ url_for('register_student') }}" class="btn btn-success">➕ Register</a>
+    <a href="{{ url_for('reassign_cno_route', class_name=selected_class) }}" class="btn btn-warning">🔢 Reassign CNOs</a>
+    <a href="{{ url_for('delete_all_students', class_name=selected_class) }}" 
+       class="btn btn-danger" 
+       onclick="return confirm('DELETE ALL students in {{ selected_class }}? This cannot be undone!')">
+        🗑️ Delete All
+    </a>
+</div>
     </div>
 </form>
 

@@ -177,44 +177,49 @@ def process_student_results(student_id, exam_id):
 # CNO
 # -------------------------------------------------------------------
 def reassign_cno(class_name, school_prefix='S3560'):
-    """Assign CNOs only to students in a class who don't have one."""
+    """Reassign CNOs in alphabetical order: Female A-Z first, then Male A-Z.
+    Only affects students without CNO or with duplicate CNOs."""
+    
+    # Get all students in class, ordered: Female A-Z, then Male A-Z
     students = Student.query.filter_by(
         current_class=class_name,
         is_deleted=False
-    ).order_by(Student.id).all()
+    ).order_by(
+        Student.sex.desc(),  # 'M' < 'F' so desc puts Females first
+        Student.first_name.asc(),
+        Student.middle_name.asc(),
+        Student.last_name.asc()
+    ).all()
     
+    # Determine starting number
     if class_name in ['Form5', 'Form6']:
-        start = 501
+        start_number = 501
     else:
-        start = 1
+        start_number = 1
     
-    # Find highest existing CNO in THIS class
+    # Find highest existing CNO in this class
     for s in students:
-        if s.cno:
+        if s.cno and s.cno.startswith(f'{school_prefix}-'):
             try:
                 num = int(s.cno.split('-')[1])
-                if num >= start:
-                    start = num + 1
+                if num >= start_number:
+                    start_number = num + 1
             except:
                 pass
     
-    # Only assign to students without CNO
+    # Assign CNOs to students without one
     assigned = 0
     for s in students:
-        if not s.cno:
-            s.cno = f"{school_prefix}-{start:04d}"
-            start += 1
+        if not s.cno or str(s.cno).strip() == '':
+            s.cno = f"{school_prefix}-{start_number:04d}"
+            start_number += 1
             assigned += 1
     
     if assigned > 0:
         db.session.commit()
-        print(f"{class_name}: {assigned} CNOs assigned, next: {school_prefix}-{start:04d}")
+        print(f"{class_name}: {assigned} CNOs assigned in alphabetical order")
     
-    db.session.commit()
-    
-    # Print summary
-    count = len([s for s in students if s.cno])
-    print(f"{class_name}: CNOs from {school_prefix}-{start_number:04d} to {school_prefix}-{current-1:04d} ({count} students)")
+    return assigned
 
 # -------------------------------------------------------------------
 # Display Helpers
@@ -499,6 +504,13 @@ def register_student():
                     db.session.add(StudentSubjectRegistration(student_id=student.id, subject_id=subj.id))
             
             db.session.commit()
+            
+            # Auto-assign CNO if student has none
+            if not student.cno or str(student.cno).strip() == '':
+                reassign_cno(student.current_class)
+            
+            flash('Student registered successfully with subjects and CNO auto-assigned.')
+            return redirect(url_for('admin_dashboard'))
             flash('Student registered.')
             return redirect(url_for('registry'))
         except Exception as e:
@@ -1170,6 +1182,48 @@ def all_students_list():
     html = render_template('all_students_list.html', all_data=all_data, classes=classes, school_info=SCHOOL_INFO)
     pdf = render_pdf(html)
     return send_file(pdf, mimetype='application/pdf', download_name='all_students.pdf')
+
+# -------------------------------------------------------------------
+# Reassign CNOs for a Class
+# -------------------------------------------------------------------
+@app.route('/reassign_cno/<class_name>')
+@login_required
+def reassign_cno_route(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    count = reassign_cno(class_name)
+    
+    if count > 0:
+        flash(f'{count} CNOs assigned in {class_name} (Female A-Z, Male A-Z).')
+    else:
+        flash(f'All students in {class_name} already have CNOs.')
+    
+    return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
+# Delete All Students in a Class
+# -------------------------------------------------------------------
+@app.route('/delete_all_students/<class_name>')
+@login_required
+def delete_all_students(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    students = Student.query.filter_by(
+        current_class=class_name,
+        is_deleted=False
+    ).all()
+    
+    count = 0
+    for student in students:
+        student.is_deleted = True
+        student.deleted_at = datetime.utcnow()
+        count += 1
+    
+    db.session.commit()
+    flash(f'{count} students from {class_name} moved to trash.')
+    return redirect(url_for('registry'))
 
 # -------------------------------------------------------------------
 # Run
