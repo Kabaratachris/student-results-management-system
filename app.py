@@ -1244,6 +1244,24 @@ def reassign_cno(class_name, school_prefix='S3560'):
     return assigned
 
 # -------------------------------------------------------------------
+# Reassign CNOs for a Class
+# -------------------------------------------------------------------
+@app.route('/reassign_cno/<class_name>')
+@login_required
+def reassign_cno_route(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    count = reassign_cno(class_name)
+    
+    if count > 0:
+        flash(f'{count} CNOs assigned in {class_name}.')
+    else:
+        flash(f'All students in {class_name} already have CNOs.')
+    
+    return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
 # Delete All Students in a Class
 # -------------------------------------------------------------------
 @app.route('/delete_all_students/<class_name>')
