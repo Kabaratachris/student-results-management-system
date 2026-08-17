@@ -862,42 +862,96 @@ def create_exam():
 @app.route('/teacher/fill_scores/<int:exam_id>', methods=['GET','POST'])
 @login_required
 def teacher_fill_scores(exam_id):
-    if current_user.role != 'teacher': abort(403)
+    if current_user.role != 'teacher':
+        abort(403)
+    
     exam = Exam.query.get_or_404(exam_id)
-    students = Student.query.filter_by(current_class=exam.target_class, is_deleted=False).order_by(Student.cno).all()
+    students = Student.query.filter_by(
+        current_class=exam.target_class,
+        is_deleted=False
+    ).order_by(Student.cno).all()
     subjects = get_subjects_for_exam(exam)
     
     if request.method == 'POST':
-        for stu in students:
-            for subj in subjects:
-                marks_key = f'marks_{stu.id}_{subj.id}'
-                if marks_key in request.form:
-                    val = request.form[marks_key]
-                    marks = float(val) if val != '' else None
-                    ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id, subject_id=subj.id).first()
-                    if ss:
-                        ss.marks = marks
-            beh_key = f'behavior_{stu.id}'
-            if beh_key in request.form:
-                comment = request.form[beh_key]
-                first_ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
-                if first_ss:
-                    first_ss.behavior_comment = comment
-        db.session.commit()
-        flash('Scores saved successfully!')
-        return redirect(url_for('teacher_dashboard'))
+        try:
+            saved_count = 0
+            for stu in students:
+                for subj in subjects:
+                    marks_key = f'marks_{stu.id}_{subj.id}'
+                    if marks_key in request.form:
+                        val = request.form[marks_key]
+                        marks = None
+                        if val and val.strip() != '':
+                            try:
+                                marks = float(val)
+                            except:
+                                marks = None
+                        
+                        # Find existing record
+                        ss = StudentSubject.query.filter_by(
+                            student_id=stu.id,
+                            exam_id=exam.id,
+                            subject_id=subj.id
+                        ).first()
+                        
+                        if ss:
+                            ss.marks = marks
+                            saved_count += 1
+                        elif marks is not None:
+                            db.session.add(StudentSubject(
+                                student_id=stu.id,
+                                exam_id=exam.id,
+                                subject_id=subj.id,
+                                marks=marks
+                            ))
+                            saved_count += 1
+                
+                # Behavior comment
+                beh_key = f'behavior_{stu.id}'
+                if beh_key in request.form:
+                    comment = request.form[beh_key]
+                    first_ss = StudentSubject.query.filter_by(
+                        student_id=stu.id,
+                        exam_id=exam.id
+                    ).first()
+                    if first_ss:
+                        first_ss.behavior_comment = comment
+            
+            db.session.commit()
+            flash(f'Scores saved successfully! ({saved_count} marks saved)')
+            return redirect(url_for('teacher_dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving scores: {str(e)}')
+            print(f"Teacher score save error: {e}")
     
+    # GET request
     marks_data = {}
     behavior_data = {}
     for stu in students:
         for subj in subjects:
-            ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id, subject_id=subj.id).first()
-            marks_data[(stu.id, subj.id)] = ss.marks if ss else ''
-        first_ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
+            ss = StudentSubject.query.filter_by(
+                student_id=stu.id,
+                exam_id=exam.id,
+                subject_id=subj.id
+            ).first()
+            marks_data[(stu.id, subj.id)] = ss.marks if ss and ss.marks is not None else ''
+        
+        first_ss = StudentSubject.query.filter_by(
+            student_id=stu.id,
+            exam_id=exam.id
+        ).first()
         behavior_data[stu.id] = first_ss.behavior_comment if first_ss else ''
     
-    return render_template('teacher_fill_scores.html', exam=exam, students=students, 
-                           subjects=subjects, marks_data=marks_data, behavior_data=behavior_data)
+    return render_template(
+        'teacher_fill_scores.html',
+        exam=exam,
+        students=students,
+        subjects=subjects,
+        marks_data=marks_data,
+        behavior_data=behavior_data
+    )
 
 # -------------------------------------------------------------------
 # Process Results (Admin)
