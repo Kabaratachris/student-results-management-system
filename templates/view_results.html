@@ -101,34 +101,34 @@
         </thead>
         <tbody>
             {% for sp in subject_performance %}
-            <tr>
-                <td>{{ sp.sn }}</td>
-                <td>{{ sp.necta_code }}</td>
-                <td style="text-align:left;">{{ sp.name }}</td>
-                <td>{{ sp.regist_total }}</td>
-                <td>{{ sp.sat }}</td>
-                {% if level == 'O' %}
-                <td>{{ sp.grades['A'] }}</td>
-                <td>{{ sp.grades['B'] }}</td>
-                <td>{{ sp.grades['C'] }}</td>
-                <td>{{ sp.grades['D'] }}</td>
-                <td>{{ sp.grades['F'] }}</td>
-                {% else %}
-                <td>{{ sp.grades['A'] }}</td>
-                <td>{{ sp.grades['B'] }}</td>
-                <td>{{ sp.grades['C'] }}</td>
-                <td>{{ sp.grades['D'] }}</td>
-                <td>{{ sp.grades['E'] }}</td>
-                <td>{{ sp.grades['S'] }}</td>
-                <td>{{ sp.grades['F'] }}</td>
-                {% endif %}
-                <td>{{ sp.total_passed }}</td>
-                <td>{{ sp.gpa }}</td>
-                <td style="background-color:{{ sp.competence_color }};color:white;font-weight:bold;">
-                    {{ sp.competence_label }}
-                </td>
-            </tr>
-            {% endfor %}
+<tr>
+    <td>{{ sp.sn }}</td>
+    <td>{{ sp.necta_code }}</td>
+    <td style="text-align:left;">{{ sp.name }}</td>
+    <td>{{ sp.regist_total if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.sat if sp.sat > 0 else '' }}</td>
+    {% if level == 'O' %}
+    <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+    {% else %}
+    <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['E'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['S'] if sp.regist_total > 0 else '' }}</td>
+    <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+    {% endif %}
+    <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
+    <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
+    <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;">
+        {{ sp.competence_label if sp.competence_label else '' }}
+    </td>
+</tr>
+{% endfor %}
         </tbody>
     </table>
 </div>
