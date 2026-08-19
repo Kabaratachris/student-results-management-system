@@ -526,7 +526,7 @@ def register_student():
             flash('Student registered and CNO assigned in alphabetical order.')
             return redirect(url_for('admin_dashboard'))
 
-                db.session.commit()
+            db.session.commit()
             
             flash('Student registered successfully.')
             return redirect(url_for('admin_dashboard'))
