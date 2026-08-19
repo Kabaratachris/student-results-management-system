@@ -5,11 +5,11 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 6mm;
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 7px;
+            font-size: 8px;
             background-color: #FFFFF0;
             color: #000080;
             margin: 0;
@@ -19,8 +19,8 @@
             background-color: #ADD8E6;
             padding: 3px;
             text-align: center;
-            margin-bottom: 5px;
-            border: 1px solid #000080;
+            margin-bottom: 3px;
+            border: none;
         }
         .school-title-banner h6, .school-title-banner h5 {
             color: #800080;
@@ -37,7 +37,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             background-color: #FFFFF0;
             table-layout: fixed;
             word-wrap: break-word;
@@ -47,16 +47,16 @@
             color: #000080;
             font-weight: bold;
             border: 1px solid #000080;
-            padding: 2px;
+            padding: 3px;
             text-align: center;
-            font-size: 6px;
+            font-size: 7px;
         }
         td {
             color: #000080;
             border: 1px solid #000080;
-            padding: 2px;
+            padding: 3px;
             text-align: center;
-            font-size: 6px;
+            font-size: 7px;
             word-wrap: break-word;
             overflow: hidden;
         }
@@ -64,7 +64,14 @@
             color: #800080;
             font-weight: bold;
             margin: 5px 0 2px 0;
+            font-size: 9px;
+            border: none;
+        }
+        .overall-text {
+            color: #800080;
+            font-weight: bold;
             font-size: 8px;
+            margin: 3px 0;
         }
     </style>
 </head>
@@ -80,7 +87,7 @@
         <h6>{{ exam.month_year_label }}</h6>
     </div>
 
-    <div class="school-title-banner"><h5>DIVISION PERFORMANCE SUMMARY</h5></div>
+    <div class="section-title">DIVISION PERFORMANCE SUMMARY</div>
     <table>
         <thead>
             <tr><th>SEX</th><th>REG</th><th>ABS</th><th>SAT</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>0</th><th>PASS</th></tr>
@@ -92,19 +99,19 @@
         </tbody>
     </table>
 
-    <div class="section-title">OVERALL: Registered: {{ total_registered }} | SAT: {{ sat_count }} | Passed: {{ total_passed }} | GPA: {{ overall_gpa }}</div>
+    <div class="overall-text">OVERALL: Registered: {{ total_registered }} | SAT: {{ sat_count }} | Passed: {{ total_passed }} | GPA: {{ overall_gpa }}</div>
 
     <div class="section-title">STUDENT RESULTS</div>
     <table>
         <thead>
-            <tr><th style="width:12%;">CNO</th><th style="width:5%;">SEX</th><th style="width:18%;">NAME</th><th style="width:7%;">AGGT</th><th style="width:6%;">DIV</th><th style="width:52%;">DETAILED SUBJECTS</th></tr>
+            <tr><th style="width:12%;">CNO</th><th style="width:5%;">SEX</th><th style="width:18%; text-align:left;">NAME</th><th style="width:7%;">AGGT</th><th style="width:6%;">DIV</th><th style="width:52%;">DETAILED SUBJECTS</th></tr>
         </thead>
         <tbody>
             {% for sr in student_results %}
             <tr>
                 <td>{{ sr.student.cno }}</td>
                 <td>{{ sr.student.sex }}</td>
-                <td>{{ sr.full_name }}</td>
+                <td style="text-align:left;">{{ sr.full_name }}</td>
                 <td>{{ sr.result.agg if sr.result else '-' }}</td>
                 <td>{{ sr.result.division if sr.result else '-' }}</td>
                 <td style="text-align:left;">{{ sr.detailed }}</td>
@@ -117,19 +124,22 @@
     <table>
         <thead>
             <tr>
-                <th style="width:4%;">S/N</th>
-                <th style="width:6%;">CODE</th>
-                <th style="width:20%; text-align:left;">SUBJECT</th>
+                <th style="width:3%;">S/N</th>
+                <th style="width:5%;">CODE</th>
+                <th style="width:22%; text-align:left;">SUBJECT</th>
                 <th style="width:7%;">REG</th>
                 <th style="width:6%;">SAT</th>
                 {% if level == 'O' %}
-                <th style="width:4%;">A</th><th style="width:4%;">B</th><th style="width:4%;">C</th><th style="width:4%;">D</th><th style="width:4%;">F</th>
-                {% else %}
-                <th style="width:3%;">A</th><th style="width:3%;">B</th><th style="width:3%;">C</th><th style="width:3%;">D</th><th style="width:3%;">E</th><th style="width:3%;">S</th><th style="width:3%;">F</th>
-                {% endif %}
+                <th style="width:5%;">A</th><th style="width:5%;">B</th><th style="width:5%;">C</th><th style="width:5%;">D</th><th style="width:5%;">F</th>
                 <th style="width:7%;">PASS</th>
                 <th style="width:6%;">GPA</th>
-                <th style="width:15%;">COMPETENCE</th>
+                <th style="width:19%;">COMPETENCE</th>
+                {% else %}
+                <th style="width:3%;">A</th><th style="width:3%;">B</th><th style="width:3%;">C</th><th style="width:3%;">D</th><th style="width:3%;">E</th><th style="width:3%;">S</th><th style="width:3%;">F</th>
+                <th style="width:7%;">PASS</th>
+                <th style="width:6%;">GPA</th>
+                <th style="width:19%;">COMPETENCE</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
