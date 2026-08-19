@@ -5,59 +5,66 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 8mm;
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 8px;
+            font-size: 7px;
             background-color: #FFFFF0;
             color: #000080;
             margin: 0;
+            width: 100%;
         }
         .school-title-banner {
             background-color: #ADD8E6;
-            padding: 5px;
+            padding: 3px;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             border: 1px solid #000080;
         }
         .school-title-banner h6, .school-title-banner h5 {
             color: #800080;
             font-weight: bold;
             margin: 1px 0;
+            font-size: 8px;
         }
         .school-title-banner h4 {
             color: #800080;
             font-weight: bold;
             margin: 2px 0;
+            font-size: 10px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             background-color: #FFFFF0;
+            table-layout: fixed;
+            word-wrap: break-word;
         }
         th {
             background-color: #E8E8D0;
             color: #000080;
             font-weight: bold;
             border: 1px solid #000080;
-            padding: 3px;
+            padding: 2px;
             text-align: center;
-            font-size: 7px;
+            font-size: 6px;
         }
         td {
             color: #000080;
             border: 1px solid #000080;
             padding: 2px;
             text-align: center;
-            font-size: 7px;
+            font-size: 6px;
+            word-wrap: break-word;
+            overflow: hidden;
         }
         .section-title {
             color: #800080;
             font-weight: bold;
-            margin: 8px 0 3px 0;
-            font-size: 9px;
+            margin: 5px 0 2px 0;
+            font-size: 8px;
         }
     </style>
 </head>
@@ -76,25 +83,21 @@
     <div class="school-title-banner"><h5>DIVISION PERFORMANCE SUMMARY</h5></div>
     <table>
         <thead>
-            <tr><th>SEX</th><th>REGIST</th><th>ABS</th><th>SAT</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>0</th><th>PASSED</th></tr>
+            <tr><th>SEX</th><th>REG</th><th>ABS</th><th>SAT</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>0</th><th>PASS</th></tr>
         </thead>
         <tbody>
             <tr><td><strong>F</strong></td><td>{{ total_reg_f }}</td><td>{{ abs_f }}</td><td>{{ sat_f }}</td><td>{{ div_counts['I']['F'] }}</td><td>{{ div_counts['II']['F'] }}</td><td>{{ div_counts['III']['F'] }}</td><td>{{ div_counts['IV']['F'] }}</td><td>{{ div_counts['0']['F'] }}</td><td>{{ passed_f }}</td></tr>
             <tr><td><strong>M</strong></td><td>{{ total_reg_m }}</td><td>{{ abs_m }}</td><td>{{ sat_m }}</td><td>{{ div_counts['I']['M'] }}</td><td>{{ div_counts['II']['M'] }}</td><td>{{ div_counts['III']['M'] }}</td><td>{{ div_counts['IV']['M'] }}</td><td>{{ div_counts['0']['M'] }}</td><td>{{ passed_m }}</td></tr>
-            <tr><td><strong>TOTAL</strong></td><td>{{ total_registered }}</td><td>{{ abs_count }}</td><td>{{ sat_count }}</td><td>{{ div_counts['I']['T'] }}</td><td>{{ div_counts['II']['T'] }}</td><td>{{ div_counts['III']['T'] }}</td><td>{{ div_counts['IV']['T'] }}</td><td>{{ div_counts['0']['T'] }}</td><td>{{ total_passed }}</td></tr>
+            <tr><td><strong>T</strong></td><td>{{ total_registered }}</td><td>{{ abs_count }}</td><td>{{ sat_count }}</td><td>{{ div_counts['I']['T'] }}</td><td>{{ div_counts['II']['T'] }}</td><td>{{ div_counts['III']['T'] }}</td><td>{{ div_counts['IV']['T'] }}</td><td>{{ div_counts['0']['T'] }}</td><td>{{ total_passed }}</td></tr>
         </tbody>
     </table>
 
-    <div class="section-title">OVERALL SCHOOL PERFORMANCE</div>
-    <table>
-        <tr><th>REGISTERED</th><th>SAT</th><th>TOTAL PASSED</th><th>OVERALL GPA</th></tr>
-        <tr><td>{{ total_registered }}</td><td>{{ sat_count }}</td><td>{{ total_passed }}</td><td>{{ overall_gpa }}</td></tr>
-    </table>
+    <div class="section-title">OVERALL: Registered: {{ total_registered }} | SAT: {{ sat_count }} | Passed: {{ total_passed }} | GPA: {{ overall_gpa }}</div>
 
     <div class="section-title">STUDENT RESULTS</div>
     <table>
         <thead>
-            <tr><th>CNO</th><th>SEX</th><th>NAME</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th></tr>
+            <tr><th style="width:12%;">CNO</th><th style="width:5%;">SEX</th><th style="width:18%;">NAME</th><th style="width:7%;">AGGT</th><th style="width:6%;">DIV</th><th style="width:52%;">DETAILED SUBJECTS</th></tr>
         </thead>
         <tbody>
             {% for sr in student_results %}
@@ -104,7 +107,7 @@
                 <td>{{ sr.full_name }}</td>
                 <td>{{ sr.result.agg if sr.result else '-' }}</td>
                 <td>{{ sr.result.division if sr.result else '-' }}</td>
-                <td>{{ sr.detailed }}</td>
+                <td style="text-align:left;">{{ sr.detailed }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -114,14 +117,19 @@
     <table>
         <thead>
             <tr>
-                <th>S/N</th><th>CODE</th><th style="text-align:left;">SUBJECT NAME</th>
-                <th>REGIST</th><th>SAT</th>
+                <th style="width:4%;">S/N</th>
+                <th style="width:6%;">CODE</th>
+                <th style="width:20%; text-align:left;">SUBJECT</th>
+                <th style="width:7%;">REG</th>
+                <th style="width:6%;">SAT</th>
                 {% if level == 'O' %}
-                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                <th style="width:4%;">A</th><th style="width:4%;">B</th><th style="width:4%;">C</th><th style="width:4%;">D</th><th style="width:4%;">F</th>
                 {% else %}
-                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
+                <th style="width:3%;">A</th><th style="width:3%;">B</th><th style="width:3%;">C</th><th style="width:3%;">D</th><th style="width:3%;">E</th><th style="width:3%;">S</th><th style="width:3%;">F</th>
                 {% endif %}
-                <th>PASSED</th><th>GPA</th><th>COMPETENCE</th>
+                <th style="width:7%;">PASS</th>
+                <th style="width:6%;">GPA</th>
+                <th style="width:15%;">COMPETENCE</th>
             </tr>
         </thead>
         <tbody>
@@ -149,7 +157,7 @@
                 {% endif %}
                 <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
                 <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
-                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;">
+                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;font-size:5px;">
                     {{ sp.competence_label if sp.competence_label else '' }}
                 </td>
             </tr>
