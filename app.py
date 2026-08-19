@@ -1419,22 +1419,19 @@ def reassign_cno(class_name, school_prefix='S3560'):
     else:
         start = 1
     
-    # First, temporarily set all CNOs to NULL to avoid conflicts
-    for s in students:
-        s.cno = None
+    # Assign temporary unique CNOs first to avoid conflicts
+    for idx, s in enumerate(students):
+        s.cno = f"TEMP-{idx:06d}"
     
     db.session.flush()
     
-    # Now assign sequential CNOs
-    changed = 0
+    # Now assign final CNOs
     for idx, s in enumerate(students):
-        new_cno = f"{school_prefix}-{start + idx:04d}"
-        s.cno = new_cno
-        changed += 1
+        s.cno = f"{school_prefix}-{start + idx:04d}"
     
     db.session.commit()
-    print(f"{class_name}: {len(students)} students sorted, {changed} CNOs updated.")
-    return changed
+    
+    return len(students)
 
 # -------------------------------------------------------------------
 # Delete All Students in a Class
