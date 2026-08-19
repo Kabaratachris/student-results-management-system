@@ -134,7 +134,7 @@
 </div>
 
 <div class="no-print mt-3">
+    <a href="{{ url_for('results_pdf', exam_id=exam.id) }}" class="btn btn-danger" target="_blank">📥 Download PDF</a>
     <button onclick="window.print()" class="btn btn-secondary">🖨️ Print</button>
     <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">← Back to Dashboard</a>
 </div>
-{% endblock %}

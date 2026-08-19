@@ -1,138 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Results - {{ exam.name }}</title>
+    <title>Results - {{ exam.target_class }}</title>
     <style>
-        body { 
-            background-color: #B0E0E6; 
-            font-family: Arial; 
-            font-size: 8px; 
-            margin: 15px;
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
         }
-        .header { 
-            text-align: center; 
-            background-color: #ADD8E6; 
-            padding: 8px; 
-            border: 1px solid #000080; 
-            margin-bottom: 8px; 
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            background-color: #FFFFF0;
+            color: #000080;
+            margin: 0;
         }
-        .header h6, .header h5, .header h4 { color: #800080; margin: 1px 0; }
-        .summary-table { margin-bottom: 10px; }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            background-color: #FFFFF0; 
-            margin-bottom: 8px; 
+        .school-title-banner {
+            background-color: #ADD8E6;
+            padding: 5px;
+            text-align: center;
+            margin-bottom: 8px;
+            border: 1px solid #000080;
         }
-        th, td { 
-            border: 1px solid #000080; 
-            padding: 3px; 
-            text-align: center; 
-            color: #000080; 
+        .school-title-banner h6, .school-title-banner h5 {
+            color: #800080;
+            font-weight: bold;
+            margin: 1px 0;
+        }
+        .school-title-banner h4 {
+            color: #800080;
+            font-weight: bold;
+            margin: 2px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            background-color: #FFFFF0;
+        }
+        th {
+            background-color: #E8E8D0;
+            color: #000080;
+            font-weight: bold;
+            border: 1px solid #000080;
+            padding: 3px;
+            text-align: center;
             font-size: 7px;
         }
-        th { background-color: #E8E8D0; font-weight: bold; }
-        .page-break { page-break-before: always; }
+        td {
+            color: #000080;
+            border: 1px solid #000080;
+            padding: 2px;
+            text-align: center;
+            font-size: 7px;
+        }
+        .section-title {
+            color: #800080;
+            font-weight: bold;
+            margin: 8px 0 3px 0;
+            font-size: 9px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="school-title-banner">
         <h6>{{ school_info.country }}</h6>
         <h6>{{ school_info.ministry }}</h6>
         <h6>{{ school_info.region }}</h6>
         <h6>{{ school_info.district }}</h6>
-        <h5>S3560 UCHILE SECONDARY SCHOOL</h5>
+        <h4>S3560 UCHILE SECONDARY SCHOOL</h4>
         <h5>{{ get_class_number(exam.target_class) }}</h5>
         <h5>{{ get_exam_type_label(exam.exam_type) }}</h5>
         <h6>{{ exam.month_year_label }}</h6>
     </div>
 
-    <!-- Summary -->
-    <div class="header">
-        <h5>DIVISION PERFORMANCE SUMMARY</h5>
-    </div>
-    <table class="summary-table">
+    <div class="school-title-banner"><h5>DIVISION PERFORMANCE SUMMARY</h5></div>
+    <table>
         <thead>
-            <tr>
-                <th>REGISTERED</th><th>SAT</th><th>ABS</th>
-                <th>DIV I</th><th>DIV II</th><th>DIV III</th><th>DIV IV</th><th>0</th><th>PASSED</th>
-            </tr>
+            <tr><th>SEX</th><th>REGIST</th><th>ABS</th><th>SAT</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>0</th><th>PASSED</th></tr>
         </thead>
         <tbody>
-            <tr>
-                <td>{{ total_registered }}</td>
-                <td>{{ sat_count }}</td>
-                <td>{{ abs_count }}</td>
-                <td>{{ div_counts['I']['T'] }}</td>
-                <td>{{ div_counts['II']['T'] }}</td>
-                <td>{{ div_counts['III']['T'] }}</td>
-                <td>{{ div_counts['IV']['T'] }}</td>
-                <td>{{ div_counts['0']['T'] }}</td>
-                <td>{{ total_passed }}</td>
-            </tr>
+            <tr><td><strong>F</strong></td><td>{{ total_reg_f }}</td><td>{{ abs_f }}</td><td>{{ sat_f }}</td><td>{{ div_counts['I']['F'] }}</td><td>{{ div_counts['II']['F'] }}</td><td>{{ div_counts['III']['F'] }}</td><td>{{ div_counts['IV']['F'] }}</td><td>{{ div_counts['0']['F'] }}</td><td>{{ passed_f }}</td></tr>
+            <tr><td><strong>M</strong></td><td>{{ total_reg_m }}</td><td>{{ abs_m }}</td><td>{{ sat_m }}</td><td>{{ div_counts['I']['M'] }}</td><td>{{ div_counts['II']['M'] }}</td><td>{{ div_counts['III']['M'] }}</td><td>{{ div_counts['IV']['M'] }}</td><td>{{ div_counts['0']['M'] }}</td><td>{{ passed_m }}</td></tr>
+            <tr><td><strong>TOTAL</strong></td><td>{{ total_registered }}</td><td>{{ abs_count }}</td><td>{{ sat_count }}</td><td>{{ div_counts['I']['T'] }}</td><td>{{ div_counts['II']['T'] }}</td><td>{{ div_counts['III']['T'] }}</td><td>{{ div_counts['IV']['T'] }}</td><td>{{ div_counts['0']['T'] }}</td><td>{{ total_passed }}</td></tr>
         </tbody>
     </table>
 
-    <!-- Overall School GPA -->
+    <div class="section-title">OVERALL SCHOOL PERFORMANCE</div>
     <table>
-        <tr><th>Registered</th><th>SAT</th><th>Total Passed</th><th>Overall GPA</th></tr>
+        <tr><th>REGISTERED</th><th>SAT</th><th>TOTAL PASSED</th><th>OVERALL GPA</th></tr>
         <tr><td>{{ total_registered }}</td><td>{{ sat_count }}</td><td>{{ total_passed }}</td><td>{{ overall_gpa }}</td></tr>
     </table>
 
-    <!-- Detailed Subject Performance -->
-    <div class="header">
-        <h5>DETAILED SUBJECT PERFORMANCE</h5>
-    </div>
+    <div class="section-title">STUDENT RESULTS</div>
     <table>
         <thead>
-            <tr>
-                <th>S/N</th><th>CODE</th><th>SUBJECT</th>
-                <th>REGIST</th><th>SAT</th>
-                {% if level == 'O' %}
-                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
-                {% else %}
-                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
-                {% endif %}
-                <th>PASSED</th><th>GPA</th><th>LEVEL</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sp in subject_performance %}
-            <tr>
-                <td>{{ sp.sn }}</td>
-                <td>{{ sp.necta_code }}</td>
-                <td>{{ sp.name }}</td>
-                <td>{{ sp.regist_total }}</td>
-                <td>{{ sp.sat }}</td>
-                {% if level == 'O' %}
-                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td>
-                <td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td>
-                <td>{{ sp.grades['F'] }}</td>
-                {% else %}
-                <td>{{ sp.grades['A'] }}</td><td>{{ sp.grades['B'] }}</td>
-                <td>{{ sp.grades['C'] }}</td><td>{{ sp.grades['D'] }}</td>
-                <td>{{ sp.grades['E'] }}</td><td>{{ sp.grades['S'] }}</td>
-                <td>{{ sp.grades['F'] }}</td>
-                {% endif %}
-                <td>{{ sp.total_passed }}</td>
-                <td>{{ sp.gpa }}</td>
-                <td style="background-color: {{ sp.competence_color }}; color: white; font-weight: bold;">
-                    {{ sp.competence_label }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- Student Results -->
-    <div class="header">
-        <h5>STUDENT RESULTS</h5>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>CNO</th><th>SEX</th><th>NAME</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th>
-            </tr>
+            <tr><th>CNO</th><th>SEX</th><th>NAME</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th></tr>
         </thead>
         <tbody>
             {% for sr in student_results %}
@@ -143,6 +105,53 @@
                 <td>{{ sr.result.agg if sr.result else '-' }}</td>
                 <td>{{ sr.result.division if sr.result else '-' }}</td>
                 <td>{{ sr.detailed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section-title">DETAILED SUBJECT PERFORMANCE</div>
+    <table>
+        <thead>
+            <tr>
+                <th>S/N</th><th>CODE</th><th style="text-align:left;">SUBJECT NAME</th>
+                <th>REGIST</th><th>SAT</th>
+                {% if level == 'O' %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                {% else %}
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
+                {% endif %}
+                <th>PASSED</th><th>GPA</th><th>COMPETENCE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sp in subject_performance %}
+            <tr>
+                <td>{{ sp.sn }}</td>
+                <td>{{ sp.necta_code }}</td>
+                <td style="text-align:left;">{{ sp.name }}</td>
+                <td>{{ sp.regist_total if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.sat if sp.sat > 0 else '' }}</td>
+                {% if level == 'O' %}
+                <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+                {% else %}
+                <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['E'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['S'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+                {% endif %}
+                <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
+                <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
+                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;">
+                    {{ sp.competence_label if sp.competence_label else '' }}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

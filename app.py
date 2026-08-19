@@ -128,28 +128,49 @@ def process_student_results(student_id, exam_id):
             rec.grade = rec.points = None
 
     if level == 'O':
-        # O-Level: Best 7 subjects
-        scored = [r for r in records if r.points is not None]
-        scored_sorted = sorted(scored, key=lambda r: r.points)[:7]
-        if len(scored_sorted) < 7:
-            agg, division = None, 'INC'
+        # Get compulsory subjects
+        if student.curriculum == 'new':
+            compulsory_codes = get_compulsory_subjects('new', 'O')
         else:
-            agg = sum(r.points for r in scored_sorted)
-            if 7 <= agg <= 17:
-                division = 'I'
-            elif 18 <= agg <= 21:
-                division = 'II'
-            elif 22 <= agg <= 25:
-                division = 'III'
-            elif 26 <= agg <= 33:
-                division = 'IV'
+            compulsory_codes = get_compulsory_subjects('old', 'O')
+        
+        # Check if student has ALL compulsory subjects with marks
+        compulsory_records = [r for r in records if r.subject.code in compulsory_codes]
+        has_all_compulsory = all(r.marks is not None for r in compulsory_records) if compulsory_records else False
+        
+        # Check if student has NO marks at all
+        has_any_marks = any(r.marks is not None for r in records)
+        
+        if not has_any_marks:
+            agg, division = None, 'ABS'
+        else:
+            scored = [r for r in records if r.points is not None]
+            scored_sorted = sorted(scored, key=lambda r: r.points)[:7]
+            
+            if len(scored_sorted) < 7:
+                agg, division = None, 'INC'
             else:
-                division = '0'
+                agg = sum(r.points for r in scored_sorted)
+                if 7 <= agg <= 17:
+                    division = 'I'
+                elif 18 <= agg <= 21:
+                    division = 'II'
+                elif 22 <= agg <= 25:
+                    division = 'III'
+                elif 26 <= agg <= 33:
+                    division = 'IV'
+                else:
+                    division = '0'
     else:
-        # A-Level: Only 3 combination subjects
         comb_subj = get_combination_subjects(student.combination)
         comb_recs = [r for r in records if r.subject.code in comb_subj]
-        if len(comb_recs) == 3 and all(r.points is not None for r in comb_recs):
+        
+        # Check if student has NO marks at all
+        has_any_marks = any(r.marks is not None for r in records)
+        
+        if not has_any_marks:
+            agg, division = None, 'ABS'
+        elif len(comb_recs) == 3 and all(r.points is not None for r in comb_recs):
             agg = sum(r.points for r in comb_recs)
             if 3 <= agg <= 9:
                 division = 'I'
@@ -162,7 +183,7 @@ def process_student_results(student_id, exam_id):
             else:
                 division = '0'
         else:
-            agg, division = None, 'ABS'
+            agg, division = None, 'INC'
 
     # Save result
     result = Result.query.filter_by(student_id=student_id, exam_id=exam_id).first()
@@ -284,12 +305,7 @@ def format_detailed_subjects(student_id, exam_id, level='O'):
     return ' '.join(parts) if parts else ''
 
 def calculate_subject_gpa(grade_dist, level='O'):
-    """
-    Calculate Subject GPA.
-    O-Level: A=1, B=2, C=3, D=4, F=5
-    A-Level: A=1, B=2, C=3, D=4, E=5, S=6, F=7
-    Formula: SUM(weight * count) / Total SAT
-    """
+    """Calculate Subject GPA. Returns blank if no students sat."""
     if level == 'O':
         weights = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5}
     else:
@@ -299,16 +315,15 @@ def calculate_subject_gpa(grade_dist, level='O'):
     total_sat = sum(grade_dist.values())
     
     if total_sat == 0:
-        return 0.0
+        return None  # Return None instead of 0 for no students
     
     return round(total_weighted / total_sat, 2)
 
 def get_competence_level(gpa, level='O'):
-    """
-    Return (label, color) based on Subject GPA.
-    O-Level: A(Excellent)=1.0-1.4, B(Very Good)=1.5-2.4, C(Good)=2.5-3.4, D(Satisfactory)=3.5-4.4, F(Fail)=4.5-5.0
-    A-Level: A(Excellent)=1.0-1.4, B(Very Good)=1.5-2.4, C(Good)=2.5-3.4, D(Average)=3.5-4.4, E(Satisfactory)=4.5-5.4, S(Unsatisfactory)=5.5-6.4, F(Fail)=6.5-7.0
-    """
+    """Return (label, color). Returns ('', '') if no GPA."""
+    if gpa is None:
+        return ('', '')
+    
     if level == 'O':
         if gpa <= 1.4:
             return ('A - Excellent', '#006400')
@@ -1020,29 +1035,53 @@ def view_results(exam_id):
     for idx, subj in enumerate(subjects, 1):
         grade_dist = {'A':0,'B':0,'C':0,'D':0,'F':0} if level=='O' else {'A':0,'B':0,'C':0,'D':0,'E':0,'S':0,'F':0}
         regist_m, regist_f, sat_subj = 0, 0, 0
+        
         for stu in students:
             reg = StudentSubjectRegistration.query.filter_by(student_id=stu.id, subject_id=subj.id).first()
             if reg:
-                if stu.sex == 'M': regist_m += 1
-                else: regist_f += 1
+                if stu.sex == 'M':
+                    regist_m += 1
+                else:
+                    regist_f += 1
+            
             ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id, subject_id=subj.id).first()
             if ss and ss.grade:
                 sat_subj += 1
                 if ss.grade in grade_dist:
                     grade_dist[ss.grade] += 1
+        
         regist_total = regist_m + regist_f
-        total_passed_subj = sum(grade_dist.values()) - grade_dist.get('F',0)
-        gpa = calculate_subject_gpa(grade_dist, level)
-        subject_gpas.append(gpa)
-        comp_level, comp_color = get_competence_level(gpa, level)
+        
+        # If no students registered, leave blank
+        if regist_total == 0:
+            gpa = None
+            comp_level, comp_color = '', ''
+            total_passed_subj = ''
+        else:
+            total_passed_subj = sum(grade_dist.values()) - grade_dist.get('F', 0)
+            gpa = calculate_subject_gpa(grade_dist, level)
+            comp_level, comp_color = get_competence_level(gpa, level)
+        
+        subject_gpas.append(gpa if gpa is not None else 0)
+        
         subject_performance.append({
-            'sn': idx, 'necta_code': subj.necta_code, 'name': subj.name,
-            'regist_m': regist_m, 'regist_f': regist_f, 'regist_total': regist_total,
-            'sat': sat_subj, 'grades': grade_dist, 'total_passed': total_passed_subj,
-            'gpa': gpa, 'competence_label': comp_level, 'competence_color': comp_color
+            'sn': idx,
+            'necta_code': subj.necta_code,
+            'name': subj.name,
+            'regist_m': regist_m,
+            'regist_f': regist_f,
+            'regist_total': regist_total,
+            'sat': sat_subj,
+            'grades': grade_dist,
+            'total_passed': total_passed_subj,
+            'gpa': gpa,
+            'competence_label': comp_level,
+            'competence_color': comp_color
         })
 
-    overall_gpa = round(sum(subject_gpas) / len(subject_gpas), 2) if subject_gpas else 0
+        # Only average GPAs that are not None
+    valid_gpas = [g for g in subject_gpas if g is not None and g > 0]
+    overall_gpa = round(sum(valid_gpas) / len(valid_gpas), 2) if valid_gpas else 0
 
     return render_template('view_results.html', exam=exam, subjects=subjects,
                            school_info=SCHOOL_INFO, level=level,
@@ -1059,12 +1098,150 @@ def view_results(exam_id):
                            get_exam_type_label=get_exam_type_label)
 
 # -------------------------------------------------------------------
-# Results PDF
+# Results PDF Download (Admin)
 # -------------------------------------------------------------------
 @app.route('/results_pdf/<int:exam_id>')
 @login_required
 def results_pdf(exam_id):
-    return redirect(url_for('view_results', exam_id=exam_id))
+    if current_user.role != 'admin':
+        abort(403)
+    
+    exam = Exam.query.get_or_404(exam_id)
+    level = 'A' if exam.target_class in ['Form5', 'Form6'] else 'O'
+    students = Student.query.filter_by(
+        current_class=exam.target_class,
+        is_deleted=False
+    ).order_by(Student.cno).all()
+    subjects = get_subjects_for_exam(exam)
+
+    total_registered = len(students)
+    total_reg_m = sum(1 for s in students if s.sex == 'M')
+    total_reg_f = sum(1 for s in students if s.sex == 'F')
+    
+    sat_count, sat_m, sat_f = 0, 0, 0
+    for stu in students:
+        marks_exist = StudentSubject.query.filter(
+            StudentSubject.student_id == stu.id,
+            StudentSubject.exam_id == exam.id,
+            StudentSubject.marks != None
+        ).count()
+        if marks_exist > 0:
+            sat_count += 1
+            if stu.sex == 'M':
+                sat_m += 1
+            else:
+                sat_f += 1
+    
+    abs_count = total_registered - sat_count
+    abs_m = total_reg_m - sat_m
+    abs_f = total_reg_f - sat_f
+
+    div_counts = {'I': {'M': 0, 'F': 0, 'T': 0}, 'II': {'M': 0, 'F': 0, 'T': 0},
+                  'III': {'M': 0, 'F': 0, 'T': 0}, 'IV': {'M': 0, 'F': 0, 'T': 0},
+                  '0': {'M': 0, 'F': 0, 'T': 0}}
+    
+    for stu in students:
+        result = Result.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
+        if result and result.division in div_counts:
+            div_counts[result.division][stu.sex] += 1
+            div_counts[result.division]['T'] += 1
+    
+    total_passed = sum(div_counts[d]['T'] for d in ['I', 'II', 'III', 'IV'])
+    passed_m = sum(div_counts[d]['M'] for d in ['I', 'II', 'III', 'IV'])
+    passed_f = sum(div_counts[d]['F'] for d in ['I', 'II', 'III', 'IV'])
+
+    student_results = []
+    for stu in students:
+        result = Result.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
+        detailed = format_detailed_subjects(stu.id, exam_id, level)
+        full_name = get_full_name(stu)
+        student_results.append({
+            'student': stu,
+            'result': result,
+            'detailed': detailed,
+            'full_name': full_name
+        })
+
+    subject_performance = []
+    subject_gpas = []
+    for idx, subj in enumerate(subjects, 1):
+        grade_dist = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0} if level == 'O' else {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'S': 0, 'F': 0}
+        regist_m, regist_f, sat_subj = 0, 0, 0
+        
+        for stu in students:
+            reg = StudentSubjectRegistration.query.filter_by(student_id=stu.id, subject_id=subj.id).first()
+            if reg:
+                if stu.sex == 'M':
+                    regist_m += 1
+                else:
+                    regist_f += 1
+            
+            ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id, subject_id=subj.id).first()
+            if ss and ss.grade:
+                sat_subj += 1
+                if ss.grade in grade_dist:
+                    grade_dist[ss.grade] += 1
+        
+        regist_total = regist_m + regist_f
+        
+        if regist_total == 0:
+            gpa = None
+            comp_level, comp_color = '', ''
+            total_passed_subj = ''
+        else:
+            total_passed_subj = sum(grade_dist.values()) - grade_dist.get('F', 0)
+            gpa = calculate_subject_gpa(grade_dist, level)
+            comp_level, comp_color = get_competence_level(gpa, level)
+        
+        subject_gpas.append(gpa if gpa is not None else 0)
+        subject_performance.append({
+            'sn': idx,
+            'necta_code': subj.necta_code,
+            'name': subj.name,
+            'regist_m': regist_m,
+            'regist_f': regist_f,
+            'regist_total': regist_total,
+            'sat': sat_subj,
+            'grades': grade_dist,
+            'total_passed': total_passed_subj,
+            'gpa': gpa,
+            'competence_label': comp_level,
+            'competence_color': comp_color
+        })
+
+    valid_gpas = [g for g in subject_gpas if g is not None and g > 0]
+    overall_gpa = round(sum(valid_gpas) / len(valid_gpas), 2) if valid_gpas else 0
+
+    html = render_template(
+        'results_pdf.html',
+        exam=exam,
+        subjects=subjects,
+        school_info=SCHOOL_INFO,
+        level=level,
+        total_registered=total_registered,
+        total_reg_m=total_reg_m,
+        total_reg_f=total_reg_f,
+        abs_count=abs_count,
+        abs_m=abs_m,
+        abs_f=abs_f,
+        sat_count=sat_count,
+        sat_m=sat_m,
+        sat_f=sat_f,
+        div_counts=div_counts,
+        total_passed=total_passed,
+        passed_m=passed_m,
+        passed_f=passed_f,
+        student_results=student_results,
+        subject_performance=subject_performance,
+        overall_gpa=overall_gpa,
+        get_full_name=get_full_name,
+        get_class_number=get_class_number,
+        get_exam_type_label=get_exam_type_label
+    )
+    
+    pdf = render_pdf(html)
+    return send_file(pdf, mimetype='application/pdf', as_attachment=False,
+                     download_name=f'results_{exam.target_class}_{exam.exam_type}.pdf')
 
 # -------------------------------------------------------------------
 # Student/Public View - CNO Only, No Names
