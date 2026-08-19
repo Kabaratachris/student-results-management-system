@@ -194,53 +194,6 @@ def process_student_results(student_id, exam_id):
     result.division = division
     db.session.commit()
 
-# -------------------------------------------------------------------
-# CNO
-# -------------------------------------------------------------------
-def reassign_cno(class_name, school_prefix='S3560'):
-    """Reassign CNOs in alphabetical order: Female A-Z first, then Male A-Z.
-    Only affects students without CNO or with duplicate CNOs."""
-    
-    # Get all students in class, ordered: Female A-Z, then Male A-Z
-    students = Student.query.filter_by(
-        current_class=class_name,
-        is_deleted=False
-    ).order_by(
-        Student.sex.desc(),  # 'M' < 'F' so desc puts Females first
-        Student.first_name.asc(),
-        Student.middle_name.asc(),
-        Student.last_name.asc()
-    ).all()
-    
-    # Determine starting number
-    if class_name in ['Form5', 'Form6']:
-        start_number = 501
-    else:
-        start_number = 1
-    
-    # Find highest existing CNO in this class
-    for s in students:
-        if s.cno and s.cno.startswith(f'{school_prefix}-'):
-            try:
-                num = int(s.cno.split('-')[1])
-                if num >= start_number:
-                    start_number = num + 1
-            except:
-                pass
-    
-    # Assign CNOs to students without one
-    assigned = 0
-    for s in students:
-        if not s.cno or str(s.cno).strip() == '':
-            s.cno = f"{school_prefix}-{start_number:04d}"
-            start_number += 1
-            assigned += 1
-    
-    if assigned > 0:
-        db.session.commit()
-        print(f"{class_name}: {assigned} CNOs assigned in alphabetical order")
-    
-    return assigned
 
 # -------------------------------------------------------------------
 # Display Helpers
@@ -1385,9 +1338,9 @@ def all_students_list():
 # Reassign CNOs for a Class
 # -------------------------------------------------------------------
 def reassign_cno(class_name, school_prefix='S3560'):
-    """Reassign CNOs alphabetically: Female A-Z first, then Male A-Z."""
+    """Reassign CNOs alphabetically: Female A-Z first, then Male A-Z.
+    Uses two-step commit to avoid unique constraint conflicts."""
     
-    # Get all female students sorted by name
     females = Student.query.filter_by(
         current_class=class_name,
         is_deleted=False,
@@ -1398,7 +1351,6 @@ def reassign_cno(class_name, school_prefix='S3560'):
         Student.last_name.asc()
     ).all()
     
-    # Get all male students sorted by name
     males = Student.query.filter_by(
         current_class=class_name,
         is_deleted=False,
@@ -1419,18 +1371,19 @@ def reassign_cno(class_name, school_prefix='S3560'):
     else:
         start = 1
     
-    # Assign temporary unique CNOs first to avoid conflicts
+    # Step 1: Set ALL CNOs to temporary unique values
     for idx, s in enumerate(students):
         s.cno = f"TEMP-{idx:06d}"
     
-    db.session.flush()
+    db.session.commit()
     
-    # Now assign final CNOs
+    # Step 2: Assign final sequential CNOs
     for idx, s in enumerate(students):
         s.cno = f"{school_prefix}-{start + idx:04d}"
     
     db.session.commit()
     
+    print(f"{class_name}: {len(students)} students reordered")
     return len(students)
 
 # -------------------------------------------------------------------
@@ -1466,10 +1419,14 @@ def reassign_cno_route(class_name):
     if current_user.role != 'admin':
         abort(403)
     
-    count = reassign_cno(class_name)
-    flash(f'CNOs reassigned for {class_name}. {count} students updated.')
+    try:
+        count = reassign_cno(class_name)
+        flash(f'CNOs reassigned for {class_name}. {count} students reordered.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}')
+    
     return redirect(url_for('registry'))
-
 # -------------------------------------------------------------------
 # Run
 # -------------------------------------------------------------------
