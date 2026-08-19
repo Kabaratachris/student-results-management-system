@@ -1427,6 +1427,34 @@ def reassign_cno_route(class_name):
         flash(f'Error: {str(e)}')
     
     return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
+# Clear All CNOs for a Class (Temporary fix)
+# -------------------------------------------------------------------
+@app.route('/clear_cnos/<class_name>')
+@login_required
+def clear_cnos(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    try:
+        students = Student.query.filter_by(
+            current_class=class_name,
+            is_deleted=False
+        ).all()
+        
+        for s in students:
+            s.cno = None
+        
+        db.session.commit()
+        flash(f'CNOs cleared for {class_name}. Now click Reassign CNOs.')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}')
+    
+    return redirect(url_for('registry'))
+
 # -------------------------------------------------------------------
 # Run
 # -------------------------------------------------------------------
