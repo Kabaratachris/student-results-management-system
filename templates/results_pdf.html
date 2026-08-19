@@ -132,18 +132,18 @@
             <tr>
                 <th style="width:3%;">S/N</th>
                 <th style="width:5%;">CODE</th>
-                <th style="width:22%; text-align:left;">SUBJECT</th>
+                <th style="width:21%; text-align:left;">SUBJECT</th>
                 <th style="width:8%;">REG</th>
-                <th style="width:6%;">SAT</th>
+                <th style="width:10%;">SAT</th>
                 {% if level == 'O' %}
-                <th style="width:5%;">A</th><th style="width:5%;">B</th><th style="width:5%;">C</th><th style="width:5%;">D</th><th style="width:5%;">F</th>
+                <th style="width:8%;">A</th><th style="width:8%;">B</th><th style="width:8%;">C</th><th style="width:8%;">D</th><th style="width:8%;">F</th>
                 <th style="width:9%;">PASS</th>
-                <th style="width:8%;">GPA</th>
+                <th style="width:10%;">GPA</th>
                 <th style="width:18%;">COMPETENCE</th>
                 {% else %}
-                <th style="width:4%;">A</th><th style="width:4%;">B</th><th style="width:4%;">C</th><th style="width:4%;">D</th><th style="width:4%;">E</th><th style="width:4%;">S</th><th style="width:4%;">F</th>
+                <th style="width:8%;">A</th><th style="width:8%;">B</th><th style="width:8%;">C</th><th style="width:8%;">D</th><th style="width:8%;">E</th><th style="width:8%;">S</th><th style="width:8%;">F</th>
                 <th style="width:9%;">PASS</th>
-                <th style="width:8%;">GPA</th>
+                <th style="width:10%;">GPA</th>
                 <th style="width:18%;">COMPETENCE</th>
                 {% endif %}
             </tr>
@@ -173,7 +173,7 @@
                 {% endif %}
                 <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
                 <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
-                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;font-size:6px;">
+                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;font-size:12px;">
                     {{ sp.competence_label if sp.competence_label else '' }}
                 </td>
             </tr>
