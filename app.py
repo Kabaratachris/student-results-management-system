@@ -596,15 +596,13 @@ def bulk_upload():
                     db.session.add(student)
                     db.session.flush()
                     
-                    # Auto-assign subjects
                     level = 'A' if class_name in ['Form5', 'Form6'] else 'O'
                     if level == 'O':
                         compulsory = get_compulsory_subjects(curriculum, 'O')
                         optional = [s.strip() for s in optional_subjects.split(',') if s.strip()] if optional_subjects else []
                         all_codes = compulsory + optional
                     else:
-                        comb = str(row.get('combination', '')).strip().upper()
-                        all_codes = get_combination_subjects(comb) + get_subsidiary_subjects(comb)
+                        all_codes = get_combination_subjects(combination) + get_subsidiary_subjects(combination)
                     
                     for code in all_codes:
                         subj = Subject.query.filter_by(code=code, level=level).first()
@@ -623,7 +621,6 @@ def bulk_upload():
             
             db.session.commit()
             
-            # Reassign all CNOs alphabetically (Females A-Z, then Males A-Z)
             reassign_cno(class_name)
             
             flash(f'Uploaded {success} students to {class_name}. CNOs assigned alphabetically.')
@@ -1461,6 +1458,19 @@ def delete_all_students(class_name):
     
     db.session.commit()
     flash(f'{count} students from {class_name} moved to trash.')
+    return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
+# Reassign CNOs for a Class
+# -------------------------------------------------------------------
+@app.route('/reassign_cno/<class_name>')
+@login_required
+def reassign_cno_route(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    count = reassign_cno(class_name)
+    flash(f'CNOs reassigned for {class_name}. {count} students updated.')
     return redirect(url_for('registry'))
 
 # -------------------------------------------------------------------
