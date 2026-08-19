@@ -1388,18 +1388,31 @@ def all_students_list():
 # Reassign CNOs for a Class
 # -------------------------------------------------------------------
 def reassign_cno(class_name, school_prefix='S3560'):
-    """Reassign CNOs alphabetically: Female A-Z first, then Male A-Z.
-    Fixes gaps. Does NOT affect scores."""
+    """Reassign CNOs alphabetically: Female A-Z first, then Male A-Z."""
     
-    students = Student.query.filter_by(
+    # Get all female students sorted by name
+    females = Student.query.filter_by(
         current_class=class_name,
-        is_deleted=False
+        is_deleted=False,
+        sex='F'
     ).order_by(
-        db.case((Student.sex == 'F', 0), else_=1),
         Student.first_name.asc(),
         Student.middle_name.asc(),
         Student.last_name.asc()
     ).all()
+    
+    # Get all male students sorted by name
+    males = Student.query.filter_by(
+        current_class=class_name,
+        is_deleted=False,
+        sex='M'
+    ).order_by(
+        Student.first_name.asc(),
+        Student.middle_name.asc(),
+        Student.last_name.asc()
+    ).all()
+    
+    students = females + males
     
     if not students:
         return 0
@@ -1409,30 +1422,22 @@ def reassign_cno(class_name, school_prefix='S3560'):
     else:
         start = 1
     
+    # First, temporarily set all CNOs to NULL to avoid conflicts
+    for s in students:
+        s.cno = None
+    
+    db.session.flush()
+    
+    # Now assign sequential CNOs
     changed = 0
     for idx, s in enumerate(students):
         new_cno = f"{school_prefix}-{start + idx:04d}"
-        if s.cno != new_cno:
-            s.cno = new_cno
-            changed += 1
+        s.cno = new_cno
+        changed += 1
     
     db.session.commit()
-    print(f"{class_name}: {len(students)} students, {changed} CNOs updated.")
+    print(f"{class_name}: {len(students)} students sorted, {changed} CNOs updated.")
     return changed
-
-# -------------------------------------------------------------------
-# Reassign CNOs for a Class
-# -------------------------------------------------------------------
-@app.route('/reassign_cno/<class_name>')
-@login_required
-def reassign_cno_route(class_name):
-    if current_user.role != 'admin':
-        abort(403)
-    
-    count = reassign_cno(class_name)
-    
-    flash(f'CNOs reassigned for {class_name}. {count} students updated. Females A-Z first, then Males A-Z.')
-    return redirect(url_for('registry'))
 
 # -------------------------------------------------------------------
 # Delete All Students in a Class
