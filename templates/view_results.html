@@ -11,7 +11,6 @@
     <h6>{{ exam.month_year_label }}</h6>
 </div>
 
-<!-- Division Summary -->
 <div class="school-title-banner"><h5>DIVISION PERFORMANCE SUMMARY</h5></div>
 <table class="table table-bordered table-sm text-center">
     <thead>
@@ -42,25 +41,18 @@
     </tbody>
 </table>
 
-<!-- Overall School Performance -->
 <h5 style="color:#800080;">OVERALL SCHOOL PERFORMANCE</h5>
 <table class="table table-bordered table-sm text-center">
     <tr><th>REGISTERED</th><th>SAT</th><th>TOTAL PASSED</th><th>OVERALL GPA</th></tr>
     <tr><td>{{ total_registered }}</td><td>{{ sat_count }}</td><td>{{ total_passed }}</td><td>{{ overall_gpa }}</td></tr>
 </table>
 
-<!-- Student Results - WITH FULL NAMES -->
 <h5 style="color:#800080;">STUDENT RESULTS</h5>
 <div class="table-responsive">
     <table class="table table-bordered table-sm">
         <thead>
             <tr>
-                <th>CNO</th>
-                <th>SEX</th>
-                <th>FULL NAME</th>
-                <th>AGGT</th>
-                <th>DIV</th>
-                <th>DETAILED SUBJECTS</th>
+                <th>CNO</th><th>SEX</th><th>NAME</th><th>AGGT</th><th>DIV</th><th>DETAILED SUBJECTS</th>
             </tr>
         </thead>
         <tbody>
@@ -78,57 +70,51 @@
     </table>
 </div>
 
-<!-- Detailed Subject Performance - NAMES LEFT ALIGNED -->
 <h5 style="color:#800080;">DETAILED SUBJECT PERFORMANCE</h5>
 <div class="table-responsive">
     <table class="table table-bordered table-sm text-center">
         <thead>
             <tr>
-                <th>S/N</th>
-                <th>CODE</th>
-                <th style="text-align:left;">SUBJECT NAME</th>
-                <th>REGIST</th>
-                <th>SAT</th>
+                <th>S/N</th><th>CODE</th><th style="text-align:left;">SUBJECT NAME</th>
+                <th>REGIST</th><th>SAT</th>
                 {% if level == 'O' %}
                 <th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
                 {% else %}
                 <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>S</th><th>F</th>
                 {% endif %}
-                <th>TOTAL PASSED</th>
-                <th>GPA</th>
-                <th>COMPETENCE LEVEL</th>
+                <th>PASSED</th><th>GPA</th><th>COMPETENCE</th>
             </tr>
         </thead>
         <tbody>
             {% for sp in subject_performance %}
-<tr>
-    <td>{{ sp.sn }}</td>
-    <td>{{ sp.necta_code }}</td>
-    <td style="text-align:left;">{{ sp.name }}</td>
-    <td>{{ sp.regist_total if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.sat if sp.sat > 0 else '' }}</td>
-    {% if level == 'O' %}
-    <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
-    {% else %}
-    <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['E'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['S'] if sp.regist_total > 0 else '' }}</td>
-    <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
-    {% endif %}
-    <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
-    <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
-    <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;">
-        {{ sp.competence_label if sp.competence_label else '' }}
-    </td>
-</tr>
-{% endfor %}
+            <tr>
+                <td>{{ sp.sn }}</td>
+                <td>{{ sp.necta_code }}</td>
+                <td style="text-align:left;">{{ sp.name }}</td>
+                <td>{{ sp.regist_total if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.sat if sp.sat > 0 else '' }}</td>
+                {% if level == 'O' %}
+                <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+                {% else %}
+                <td>{{ sp.grades['A'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['B'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['C'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['D'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['E'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['S'] if sp.regist_total > 0 else '' }}</td>
+                <td>{{ sp.grades['F'] if sp.regist_total > 0 else '' }}</td>
+                {% endif %}
+                <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
+                <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
+                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;">
+                    {{ sp.competence_label if sp.competence_label else '' }}
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>

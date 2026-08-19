@@ -5,11 +5,11 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 5mm;
+            margin: 4mm;
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 9px;
+            font-size: 10px;
             background-color: #FFFFF0;
             color: #000080;
             margin: 0;
@@ -26,19 +26,19 @@
             color: #800080;
             font-weight: bold;
             margin: 1px 0;
-            font-size: 14px;
+            font-size: 11px;
         }
         .school-title-banner h5 {
             color: #800080;
             font-weight: bold;
             margin: 1px 0;
-            font-size: 12px;
+            font-size: 13px;
         }
         .school-title-banner h4 {
             color: #800080;
             font-weight: bold;
             margin: 2px 0;
-            font-size: 14px;
+            font-size: 15px;
         }
         table {
             width: 100%;
@@ -53,16 +53,16 @@
             color: #000080;
             font-weight: bold;
             border: 1px solid #000080;
-            padding: 4px;
+            padding: 6px;
             text-align: center;
-            font-size: 8px;
+            font-size: 10px;
         }
         td {
             color: #000080;
             border: 1px solid #000080;
-            padding: 4px;
+            padding: 6px;
             text-align: center;
-            font-size: 8px;
+            font-size: 10px;
             word-wrap: break-word;
             overflow: hidden;
         }
@@ -70,13 +70,13 @@
             color: #800080;
             font-weight: bold;
             margin: 6px 0 2px 0;
-            font-size: 10px;
+            font-size: 12px;
             border: none;
         }
         .overall-text {
             color: #800080;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10px;
             margin: 3px 0;
         }
     </style>
@@ -130,21 +130,21 @@
     <table>
         <thead>
             <tr>
-                <th style="width:3%;">S/N</th>
-                <th style="width:5%;">CODE</th>
-                <th style="width:21%; text-align:left;">SUBJECT</th>
+                <th style="width:4%;">S/N</th>
+                <th style="width:6%;">CODE</th>
+                <th style="width:20%; text-align:left;">SUBJECT</th>
                 <th style="width:8%;">REG</th>
-                <th style="width:10%;">SAT</th>
+                <th style="width:7%;">SAT</th>
                 {% if level == 'O' %}
-                <th style="width:8%;">A</th><th style="width:8%;">B</th><th style="width:8%;">C</th><th style="width:8%;">D</th><th style="width:8%;">F</th>
-                <th style="width:9%;">PASS</th>
-                <th style="width:10%;">GPA</th>
-                <th style="width:18%;">COMPETENCE</th>
+                <th style="width:5%;">A</th><th style="width:5%;">B</th><th style="width:5%;">C</th><th style="width:5%;">D</th><th style="width:5%;">F</th>
+                <th style="width:7%;">PASS</th>
+                <th style="width:6%;">GPA</th>
+                <th style="width:17%;">COMPETENCE</th>
                 {% else %}
-                <th style="width:8%;">A</th><th style="width:8%;">B</th><th style="width:8%;">C</th><th style="width:8%;">D</th><th style="width:8%;">E</th><th style="width:8%;">S</th><th style="width:8%;">F</th>
-                <th style="width:9%;">PASS</th>
-                <th style="width:10%;">GPA</th>
-                <th style="width:18%;">COMPETENCE</th>
+                <th style="width:4%;">A</th><th style="width:4%;">B</th><th style="width:4%;">C</th><th style="width:4%;">D</th><th style="width:4%;">E</th><th style="width:4%;">S</th><th style="width:4%;">F</th>
+                <th style="width:7%;">PASS</th>
+                <th style="width:6%;">GPA</th>
+                <th style="width:17%;">COMPETENCE</th>
                 {% endif %}
             </tr>
         </thead>
@@ -173,7 +173,7 @@
                 {% endif %}
                 <td>{{ sp.total_passed if sp.total_passed != '' else '' }}</td>
                 <td>{{ sp.gpa if sp.gpa is not none else '' }}</td>
-                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;font-size:12px;">
+                <td style="background-color:{{ sp.competence_color if sp.competence_color else 'transparent' }};color:white;font-weight:bold;font-size:7px;">
                     {{ sp.competence_label if sp.competence_label else '' }}
                 </td>
             </tr>
