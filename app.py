@@ -44,19 +44,24 @@ def render_pdf(html_string):
 # Subject Helpers
 # -------------------------------------------------------------------
 def get_compulsory_subjects(curriculum, level='O'):
+    """Get compulsory subject codes based on curriculum and level."""
     if level == 'A':
         return []
+    
     if curriculum == 'new':
         return ['HTM', 'KISW', 'GEO', 'ENG', 'MATH', 'B/STUDY']
-    else:
+    else:  # old curriculum
         return ['CIV', 'KISW', 'GEO', 'ENG', 'MATH', 'HIST', 'BIO']
 
+
 def get_optional_subjects(curriculum, level='O'):
+    """Get optional subject codes based on curriculum."""
     if level == 'A':
         return []
+    
     if curriculum == 'new':
         return ['PHY', 'CHEM', 'BIO', 'HIST', 'ICT']
-    else:
+    else:  # old curriculum
         return ['PHY', 'CHEM', 'LIT/ENG']
 
 def get_combination_subjects(comb_code):
@@ -320,51 +325,92 @@ SCHOOL_INFO = {
 # Init DB
 # -------------------------------------------------------------------
 def init_db():
+    """Initialize the database and create default users/subjects."""
     db.create_all()
+    
+    # Create default users
     if not User.query.filter_by(username='admin').first():
         admin = User(username='admin', password_hash=generate_password_hash('admin123'), role='admin')
         db.session.add(admin)
         print("Admin created: admin / admin123")
+    
     if not User.query.filter_by(username='teacher').first():
         teacher = User(username='teacher', password_hash=generate_password_hash('teacher123'), role='teacher')
         db.session.add(teacher)
         print("Teacher created: teacher / teacher123")
+    
     db.session.commit()
     
+    # Create subjects if they don't exist
     if Subject.query.count() == 0:
         subjects_data = [
-            ('HTM','060','Historia ya Tanzania na Maadili','new','compulsory','O'),
-            ('KISW','021','Kiswahili','new','compulsory','O'),
-            ('GEO','013','Geography','new','compulsory','O'),
-            ('ENG','022','English','new','compulsory','O'),
-            ('MATH','043','Mathematics','new','compulsory','O'),
-            ('B/STUDY','065','Business Studies','new','compulsory','O'),
-            ('PHY','031','Physics','new','optional','O'),
-            ('CHEM','032','Chemistry','new','optional','O'),
-            ('BIO','033','Biology','new','optional','O'),
-            ('HIST','012','History','new','optional','O'),
-            ('ICT','072','ICT','new','optional','O'),
-            ('CIV','011','Civics','old','compulsory','O'),
-            ('LIT/ENG','024','Literature in English','old','optional','O'),
-            ('PHY','131','Physics','both','combination','A'),
-            ('CHEM','132','Chemistry','both','combination','A'),
-            ('BIO','133','Biology','both','combination','A'),
-            ('ADV/MATHS','142','Advanced Mathematics','both','combination','A'),
-            ('GEO','113','Geography','both','combination','A'),
-            ('KISW','121','Kiswahili','both','combination','A'),
-            ('ENG','122','English Language','both','combination','A'),
-            ('HIST','112','History','both','combination','A'),
-            ('A/C','128','Academic Communication','both','subsidiary','A'),
-            ('HTM','160','Historia ya Tanzania na Maadili','both','subsidiary','A'),
-            ('BAM','141','Basic Applied Mathematics','both','subsidiary','A'),
+            # ========== O-LEVEL NEW CURRICULUM (Form 1 & 2) ==========
+            # Compulsory (6 subjects)
+            ('HTM', '060', 'Historia ya Tanzania na Maadili', 'new', 'compulsory', 'O'),
+            ('KISW', '021', 'Kiswahili', 'new', 'compulsory', 'O'),
+            ('GEO', '013', 'Geography', 'new', 'compulsory', 'O'),
+            ('ENG', '022', 'English', 'new', 'compulsory', 'O'),
+            ('MATH', '043', 'Mathematics', 'new', 'compulsory', 'O'),
+            ('B/STUDY', '065', 'Business Studies', 'new', 'compulsory', 'O'),
+            # Optional (min 2, max 3)
+            ('PHY', '031', 'Physics', 'new', 'optional', 'O'),
+            ('CHEM', '032', 'Chemistry', 'new', 'optional', 'O'),
+            ('BIO', '033', 'Biology', 'new', 'optional', 'O'),
+            ('HIST', '012', 'History', 'new', 'optional', 'O'),
+            ('ICT', '072', 'Information and Communication Technology', 'new', 'optional', 'O'),
+            
+            # ========== O-LEVEL OLD CURRICULUM (Form 3 & 4) ==========
+            # Compulsory (7 subjects)
+            ('CIV', '011', 'Civics', 'old', 'compulsory', 'O'),
+            # KISW, GEO, ENG, MATH already exist above but with 'new' curriculum
+            # We need them for 'old' too - but code+level is unique
+            # So we use same code but update curriculum to 'both'
+            ('KISW', '021', 'Kiswahili', 'both', 'compulsory', 'O'),
+            ('GEO', '013', 'Geography', 'both', 'compulsory', 'O'),
+            ('ENG', '022', 'English', 'both', 'compulsory', 'O'),
+            ('MATH', '043', 'Mathematics', 'both', 'compulsory', 'O'),
+            ('HIST', '012', 'History', 'both', 'compulsory', 'O'),
+            ('BIO', '033', 'Biology', 'both', 'optional', 'O'),
+            # Optional
+            ('PHY', '031', 'Physics', 'both', 'optional', 'O'),
+            ('CHEM', '032', 'Chemistry', 'both', 'optional', 'O'),
+            ('LIT/ENG', '024', 'Literature in English', 'old', 'optional', 'O'),
+            
+            # ========== A-LEVEL SUBJECTS ==========
+            # Combination subjects
+            ('PHY', '131', 'Physics', 'both', 'combination', 'A'),
+            ('CHEM', '132', 'Chemistry', 'both', 'combination', 'A'),
+            ('BIO', '133', 'Biology', 'both', 'combination', 'A'),
+            ('ADV/MATHS', '142', 'Advanced Mathematics', 'both', 'combination', 'A'),
+            ('GEO', '113', 'Geography', 'both', 'combination', 'A'),
+            ('KISW', '121', 'Kiswahili', 'both', 'combination', 'A'),
+            ('ENG', '122', 'English Language', 'both', 'combination', 'A'),
+            ('HIST', '112', 'History', 'both', 'combination', 'A'),
+            # Subsidiary subjects
+            ('A/C', '128', 'Academic Communication', 'both', 'subsidiary', 'A'),
+            ('HTM', '160', 'Historia ya Tanzania na Maadili', 'both', 'subsidiary', 'A'),
+            ('BAM', '141', 'Basic Applied Mathematics', 'both', 'subsidiary', 'A'),
         ]
+        
+        # Use set to avoid duplicates (code + level)
+        seen = set()
+        count = 0
         for code, ncode, name, curriculum, category, level in subjects_data:
-            db.session.add(Subject(code=code, necta_code=ncode, name=name, curriculum=curriculum, category=category, level=level))
+            key = (code, level)
+            if key not in seen:
+                db.session.add(Subject(
+                    code=code,
+                    necta_code=ncode,
+                    name=name,
+                    curriculum=curriculum,
+                    category=category,
+                    level=level
+                ))
+                seen.add(key)
+                count += 1
+        
         db.session.commit()
-        print(f"Created {len(subjects_data)} subjects")
-
-with app.app_context():
-    init_db()
+        print(f"Created {count} subjects successfully!")
 
 # -------------------------------------------------------------------
 # Auth
@@ -1454,6 +1500,48 @@ def clear_cnos(class_name):
         flash(f'Error: {str(e)}')
     
     return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
+# Clean duplicate subjects (Temporary fix)
+# -------------------------------------------------------------------
+@app.route('/cleanup_subjects')
+@login_required
+def cleanup_subjects():
+    if current_user.role != 'admin':
+        abort(403)
+    
+    try:
+        # Find all subjects
+        subjects = Subject.query.order_by(Subject.code, Subject.level).all()
+        seen = set()
+        duplicates = []
+        
+        for subj in subjects:
+            key = (subj.code, subj.level)
+            if key in seen:
+                duplicates.append(subj)
+            else:
+                seen.add(key)
+        
+        # Delete duplicates
+        for dup in duplicates:
+            # Check if this duplicate has any scores
+            has_scores = StudentSubject.query.filter_by(subject_id=dup.id).count()
+            if has_scores > 0:
+                flash(f'Cannot delete {dup.code} (ID:{dup.id}) - has {has_scores} scores.', 'warning')
+            else:
+                # Delete registrations
+                StudentSubjectRegistration.query.filter_by(subject_id=dup.id).delete()
+                db.session.delete(dup)
+        
+        db.session.commit()
+        flash(f'Cleanup complete. Removed {len(duplicates)} duplicate subjects.')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}')
+    
+    return redirect(url_for('admin_dashboard'))
 
 # -------------------------------------------------------------------
 # Run
