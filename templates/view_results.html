@@ -125,3 +125,12 @@
     <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">← Back to Dashboard</a>
 </div>
 {% endblock %}
+{% if print_mode == '1' %}
+<script>
+    window.onload = function() {
+        setTimeout(function() {
+            window.print();
+        }, 1000);
+    };
+</script>
+{% endif %}

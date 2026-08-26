@@ -969,6 +969,7 @@ def process_results_route(exam_id):
 @app.route('/view_results/<int:exam_id>')
 @login_required
 def view_results(exam_id):
+    print_mode = request.args.get('print_mode', '0')
     exam = Exam.query.get_or_404(exam_id)
     level = 'A' if exam.target_class in ['Form5','Form6'] else 'O'
     students = Student.query.filter_by(current_class=exam.target_class, is_deleted=False).order_by(Student.cno).all()
@@ -1076,7 +1077,8 @@ def view_results(exam_id):
                            overall_gpa=overall_gpa,
                            get_full_name=get_full_name,
                            get_class_number=get_class_number,
-                           get_exam_type_label=get_exam_type_label)
+                           get_exam_type_label=get_exam_type_label,
+                           print_mode=print_mode)
 
 # -------------------------------------------------------------------
 # Results PDF Download (Admin)
@@ -1086,143 +1088,8 @@ def view_results(exam_id):
 def results_pdf(exam_id):
     if current_user.role != 'admin':
         abort(403)
-    
-    exam = Exam.query.get_or_404(exam_id)
-    level = 'A' if exam.target_class in ['Form5', 'Form6'] else 'O'
-    students = Student.query.filter_by(
-        current_class=exam.target_class,
-        is_deleted=False
-    ).order_by(Student.cno).all()
-    subjects = get_subjects_for_exam(exam)
-
-    total_registered = len(students)
-    total_reg_m = sum(1 for s in students if s.sex == 'M')
-    total_reg_f = sum(1 for s in students if s.sex == 'F')
-    
-    sat_count, sat_m, sat_f = 0, 0, 0
-    for stu in students:
-        marks_exist = StudentSubject.query.filter(
-            StudentSubject.student_id == stu.id,
-            StudentSubject.exam_id == exam.id,
-            StudentSubject.marks != None
-        ).count()
-        if marks_exist > 0:
-            sat_count += 1
-            if stu.sex == 'M':
-                sat_m += 1
-            else:
-                sat_f += 1
-    
-    abs_count = total_registered - sat_count
-    abs_m = total_reg_m - sat_m
-    abs_f = total_reg_f - sat_f
-
-    div_counts = {'I': {'M': 0, 'F': 0, 'T': 0}, 'II': {'M': 0, 'F': 0, 'T': 0},
-                  'III': {'M': 0, 'F': 0, 'T': 0}, 'IV': {'M': 0, 'F': 0, 'T': 0},
-                  '0': {'M': 0, 'F': 0, 'T': 0}}
-    
-    for stu in students:
-        result = Result.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
-        if result and result.division in div_counts:
-            div_counts[result.division][stu.sex] += 1
-            div_counts[result.division]['T'] += 1
-    
-    total_passed = sum(div_counts[d]['T'] for d in ['I', 'II', 'III', 'IV'])
-    passed_m = sum(div_counts[d]['M'] for d in ['I', 'II', 'III', 'IV'])
-    passed_f = sum(div_counts[d]['F'] for d in ['I', 'II', 'III', 'IV'])
-
-    student_results = []
-    for stu in students:
-        result = Result.query.filter_by(student_id=stu.id, exam_id=exam.id).first()
-        detailed = format_detailed_subjects(stu.id, exam_id, level)
-        full_name = get_full_name(stu)
-        student_results.append({
-            'student': stu,
-            'result': result,
-            'detailed': detailed,
-            'full_name': full_name
-        })
-
-    subject_performance = []
-    subject_gpas = []
-    for idx, subj in enumerate(subjects, 1):
-        grade_dist = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0} if level == 'O' else {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'S': 0, 'F': 0}
-        regist_m, regist_f, sat_subj = 0, 0, 0
-        
-        for stu in students:
-            reg = StudentSubjectRegistration.query.filter_by(student_id=stu.id, subject_id=subj.id).first()
-            if reg:
-                if stu.sex == 'M':
-                    regist_m += 1
-                else:
-                    regist_f += 1
-            
-            ss = StudentSubject.query.filter_by(student_id=stu.id, exam_id=exam.id, subject_id=subj.id).first()
-            if ss and ss.grade:
-                sat_subj += 1
-                if ss.grade in grade_dist:
-                    grade_dist[ss.grade] += 1
-        
-        regist_total = regist_m + regist_f
-        
-        if regist_total == 0:
-            gpa = None
-            comp_level, comp_color = '', ''
-            total_passed_subj = ''
-        else:
-            total_passed_subj = sum(grade_dist.values()) - grade_dist.get('F', 0)
-            gpa = calculate_subject_gpa(grade_dist, level)
-            comp_level, comp_color = get_competence_level(gpa, level)
-        
-        subject_gpas.append(gpa if gpa is not None else 0)
-        subject_performance.append({
-            'sn': idx,
-            'necta_code': subj.necta_code,
-            'name': subj.name,
-            'regist_m': regist_m,
-            'regist_f': regist_f,
-            'regist_total': regist_total,
-            'sat': sat_subj,
-            'grades': grade_dist,
-            'total_passed': total_passed_subj,
-            'gpa': gpa,
-            'competence_label': comp_level,
-            'competence_color': comp_color
-        })
-
-    valid_gpas = [g for g in subject_gpas if g is not None and g > 0]
-    overall_gpa = round(sum(valid_gpas) / len(valid_gpas), 2) if valid_gpas else 0
-
-    html = render_template(
-        'results_pdf.html',
-        exam=exam,
-        subjects=subjects,
-        school_info=SCHOOL_INFO,
-        level=level,
-        total_registered=total_registered,
-        total_reg_m=total_reg_m,
-        total_reg_f=total_reg_f,
-        abs_count=abs_count,
-        abs_m=abs_m,
-        abs_f=abs_f,
-        sat_count=sat_count,
-        sat_m=sat_m,
-        sat_f=sat_f,
-        div_counts=div_counts,
-        total_passed=total_passed,
-        passed_m=passed_m,
-        passed_f=passed_f,
-        student_results=student_results,
-        subject_performance=subject_performance,
-        overall_gpa=overall_gpa,
-        get_full_name=get_full_name,
-        get_class_number=get_class_number,
-        get_exam_type_label=get_exam_type_label
-    )
-    
-    pdf = render_pdf(html)
-    return send_file(pdf, mimetype='application/pdf', as_attachment=False,
-                     download_name=f'results_{exam.target_class}_{exam.exam_type}.pdf')
+    # Use browser print-to-PDF (same layout as screen, no memory issues)
+    return redirect(url_for('view_results', exam_id=exam_id, print_mode=1))
 
 # -------------------------------------------------------------------
 # Student/Public View - CNO Only, No Names
