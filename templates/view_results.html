@@ -1,5 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    @media print {
+        body {
+            background-color: white !important;
+            padding: 0 !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+        .content-container {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background-color: white !important;
+        }
+        .school-title-banner {
+            background-color: #ADD8E6 !important;
+            border: 1px solid #000080 !important;
+        }
+        table {
+            background-color: #FFFFF0 !important;
+            font-size: 8px !important;
+        }
+        table th {
+            background-color: #E8E8D0 !important;
+            color: #000080 !important;
+            font-size: 8px !important;
+            padding: 4px !important;
+        }
+        table td {
+            color: #000080 !important;
+            font-size: 8px !important;
+            padding: 4px !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
+    }
+</style>
 <div class="school-title-banner">
     <h6>{{ school_info.country }}</h6>
     <h6>{{ school_info.ministry }}</h6>
