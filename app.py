@@ -35,11 +35,18 @@ login_manager.login_view = 'login'
 # PDF Helper
 # -------------------------------------------------------------------
 def render_pdf(html_string):
-    result = io.BytesIO()
-    pisa.CreatePDF(io.StringIO(html_string), dest=result)
-    result.seek(0)
-    return result
-
+    """Generate PDF using pdfkit (more memory efficient)."""
+    try:
+        import pdfkit
+        result = pdfkit.from_string(html_string, False)
+        return io.BytesIO(result)
+    except Exception as e:
+        print(f"pdfkit error: {e}")
+        # Fallback to xhtml2pdf
+        result = io.BytesIO()
+        pisa.CreatePDF(io.StringIO(html_string), dest=result)
+        result.seek(0)
+        return result
 # -------------------------------------------------------------------
 # Subject Helpers
 # -------------------------------------------------------------------
