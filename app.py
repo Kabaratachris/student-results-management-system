@@ -1502,40 +1502,65 @@ def clear_cnos(class_name):
     return redirect(url_for('registry'))
 
 # -------------------------------------------------------------------
-# Clean duplicate subjects (Temporary fix)
+# Fix duplicate subjects in EXISTING database
 # -------------------------------------------------------------------
-@app.route('/cleanup_subjects')
+@app.route('/fix_bio')
 @login_required
-def cleanup_subjects():
+def fix_bio():
     if current_user.role != 'admin':
         abort(403)
     
     try:
-        # Find all subjects
-        subjects = Subject.query.order_by(Subject.code, Subject.level).all()
-        seen = set()
-        duplicates = []
+        # Find ALL BIO subjects
+        bio_subjects = Subject.query.filter_by(code='BIO', level='O').all()
         
-        for subj in subjects:
-            key = (subj.code, subj.level)
-            if key in seen:
-                duplicates.append(subj)
-            else:
-                seen.add(key)
+        flash(f'Found {len(bio_subjects)} BIO subjects for O-Level')
         
-        # Delete duplicates
-        for dup in duplicates:
-            # Check if this duplicate has any scores
-            has_scores = StudentSubject.query.filter_by(subject_id=dup.id).count()
-            if has_scores > 0:
-                flash(f'Cannot delete {dup.code} (ID:{dup.id}) - has {has_scores} scores.', 'warning')
-            else:
-                # Delete registrations
-                StudentSubjectRegistration.query.filter_by(subject_id=dup.id).delete()
+        # If more than 1, keep the first, merge others
+        if len(bio_subjects) > 1:
+            keep = bio_subjects[0]
+            
+            for dup in bio_subjects[1:]:
+                # Move all StudentSubject records to the kept subject
+                ss_records = StudentSubject.query.filter_by(subject_id=dup.id).all()
+                for ss in ss_records:
+                    # Check if student already has record for kept subject
+                    existing = StudentSubject.query.filter_by(
+                        student_id=ss.student_id,
+                        exam_id=ss.exam_id,
+                        subject_id=keep.id
+                    ).first()
+                    
+                    if existing:
+                        # Merge marks
+                        if existing.marks is None and ss.marks is not None:
+                            existing.marks = ss.marks
+                            existing.grade = ss.grade
+                            existing.points = ss.points
+                        db.session.delete(ss)
+                    else:
+                        # Move to kept subject
+                        ss.subject_id = keep.id
+                
+                # Move registrations
+                reg_records = StudentSubjectRegistration.query.filter_by(subject_id=dup.id).all()
+                for reg in reg_records:
+                    existing_reg = StudentSubjectRegistration.query.filter_by(
+                        student_id=reg.student_id,
+                        subject_id=keep.id
+                    ).first()
+                    if existing_reg:
+                        db.session.delete(reg)
+                    else:
+                        reg.subject_id = keep.id
+                
+                # Delete duplicate subject
                 db.session.delete(dup)
-        
-        db.session.commit()
-        flash(f'Cleanup complete. Removed {len(duplicates)} duplicate subjects.')
+            
+            db.session.commit()
+            flash(f'BIO fixed! Merged {len(bio_subjects)} subjects into 1.')
+        else:
+            flash(f'Only 1 BIO subject found. No fix needed.')
         
     except Exception as e:
         db.session.rollback()
