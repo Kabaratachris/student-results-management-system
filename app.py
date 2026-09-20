@@ -1019,7 +1019,7 @@ def view_results(exam_id):
 
     subject_performance = []
     subject_gpas = []
-        for idx, subj in enumerate(subjects, 1):
+    for idx, subj in enumerate(subjects, 1):
         grade_dist = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0} if level == 'O' else {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'S': 0, 'F': 0}
         regist_m, regist_f, sat_subj = 0, 0, 0
         
@@ -1465,6 +1465,24 @@ with app.app_context():
         print("Database initialized successfully!")
     except Exception as e:
         print(f"Database init error: {e}")
+
+@app.route('/setup_db')
+def setup_db():
+    try:
+        db.create_all()
+        
+        if not User.query.filter_by(username='admin').first():
+            db.session.add(User(username='admin', password_hash=generate_password_hash('admin123'), role='admin'))
+        if not User.query.filter_by(username='teacher').first():
+            db.session.add(User(username='teacher', password_hash=generate_password_hash('teacher123'), role='teacher'))
+        db.session.commit()
+        
+        if Subject.query.count() == 0:
+            init_db()
+        
+        return "Database ready! <a href='/login'>Login here</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 # -------------------------------------------------------------------
