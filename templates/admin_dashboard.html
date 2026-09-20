@@ -67,9 +67,13 @@
                 <td>{{ exam.term }}</td>
                 <td>{{ exam.date.strftime('%d-%m-%Y') if exam.date else 'N/A' }}</td>
                 <td>
-                    <a href="{{ url_for('teacher_fill_scores', exam_id=exam.id) }}" class="btn btn-sm btn-success">Fill Scores</a>
-                    <a href="{{ url_for('process_results_route', exam_id=exam.id) }}" class="btn btn-sm btn-warning">Process Results</a>
-                    <a href="{{ url_for('view_results', exam_id=exam.id) }}" class="btn btn-sm btn-info">View Results</a>
+                    <a href="{{ url_for('teacher_fill_scores', exam_id=exam.id) }}" class="btn btn-sm btn-success">Scores</a>
+    <a href="{{ url_for('process_results_route', exam_id=exam.id) }}" class="btn btn-sm btn-warning">Process</a>
+    <a href="{{ url_for('view_results', exam_id=exam.id) }}" class="btn btn-sm btn-info">Results</a>
+    <a href="{{ url_for('delete_exam', exam_id=exam.id) }}" class="btn btn-sm btn-danger" 
+       onclick="return confirm('DELETE exam {{ exam.name }}? This will delete all scores and results for this exam. Cannot be undone!')">
+        🗑️ Delete
+    </a>
                 </td>
             </tr>
             {% endfor %}

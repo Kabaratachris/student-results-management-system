@@ -1484,6 +1484,34 @@ def setup_db():
     except Exception as e:
         return f"Error: {str(e)}"
 
+# -------------------------------------------------------------------
+# Delete Exam
+# -------------------------------------------------------------------
+@app.route('/delete_exam/<int:exam_id>')
+@login_required
+def delete_exam(exam_id):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    try:
+        exam = Exam.query.get_or_404(exam_id)
+        exam_name = exam.name
+        
+        # Delete all related records
+        StudentSubject.query.filter_by(exam_id=exam_id).delete()
+        Result.query.filter_by(exam_id=exam_id).delete()
+        
+        # Delete the exam
+        db.session.delete(exam)
+        db.session.commit()
+        
+        flash(f'Exam "{exam_name}" deleted successfully.')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting exam: {str(e)}')
+    
+    return redirect(url_for('admin_dashboard'))
 
 # -------------------------------------------------------------------
 # Run
