@@ -270,17 +270,22 @@ def format_detailed_subjects(student_id, exam_id, level='O'):
     return ' '.join(parts) if parts else ''
 
 def calculate_subject_gpa(grade_dist, level='O'):
-    """Calculate Subject GPA. Returns blank if no students sat."""
+    """Calculate Subject GPA correctly."""
     if level == 'O':
         weights = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'F': 5}
     else:
         weights = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'S': 6, 'F': 7}
     
-    total_weighted = sum(weights.get(g, 0) * grade_dist.get(g, 0) for g in weights)
-    total_sat = sum(grade_dist.values())
+    total_weighted = 0
+    total_sat = 0
+    
+    for grade, count in grade_dist.items():
+        if grade in weights and count > 0:
+            total_weighted += weights[grade] * count
+            total_sat += count
     
     if total_sat == 0:
-        return None  # Return None instead of 0 for no students
+        return None
     
     return round(total_weighted / total_sat, 2)
 
@@ -1014,8 +1019,8 @@ def view_results(exam_id):
 
     subject_performance = []
     subject_gpas = []
-    for idx, subj in enumerate(subjects, 1):
-        grade_dist = {'A':0,'B':0,'C':0,'D':0,'F':0} if level=='O' else {'A':0,'B':0,'C':0,'D':0,'E':0,'S':0,'F':0}
+        for idx, subj in enumerate(subjects, 1):
+        grade_dist = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0} if level == 'O' else {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'S': 0, 'F': 0}
         regist_m, regist_f, sat_subj = 0, 0, 0
         
         for stu in students:
@@ -1034,13 +1039,13 @@ def view_results(exam_id):
         
         regist_total = regist_m + regist_f
         
-        # If no students registered, leave blank
         if regist_total == 0:
             gpa = None
             comp_level, comp_color = '', ''
             total_passed_subj = ''
         else:
-            total_passed_subj = sum(grade_dist.values()) - grade_dist.get('F', 0)
+            # Calculate PASSED = sum of all grades EXCEPT F
+            total_passed_subj = sum(count for grade, count in grade_dist.items() if grade != 'F')
             gpa = calculate_subject_gpa(grade_dist, level)
             comp_level, comp_color = get_competence_level(gpa, level)
         
@@ -1441,6 +1446,26 @@ def fix_bio():
         flash(f'Error: {str(e)}')
     
     return redirect(url_for('admin_dashboard'))
+
+# Initialize database on startup
+with app.app_context():
+    try:
+        db.create_all()
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', password_hash=generate_password_hash('admin123'), role='admin')
+            db.session.add(admin)
+        if not User.query.filter_by(username='teacher').first():
+            teacher = User(username='teacher', password_hash=generate_password_hash('teacher123'), role='teacher')
+            db.session.add(teacher)
+        db.session.commit()
+        
+        if Subject.query.count() == 0:
+            init_db()
+        
+        print("Database initialized successfully!")
+    except Exception as e:
+        print(f"Database init error: {e}")
+
 
 # -------------------------------------------------------------------
 # Run
