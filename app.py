@@ -1514,6 +1514,145 @@ def delete_exam(exam_id):
     return redirect(url_for('admin_dashboard'))
 
 # -------------------------------------------------------------------
+# Admin Upload Scores via CSV Template
+# -------------------------------------------------------------------
+@app.route('/admin/upload_scores/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def admin_upload_scores(exam_id):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    exam = Exam.query.get_or_404(exam_id)
+    subjects = get_subjects_for_exam(exam)
+    
+    if request.method == 'POST':
+        try:
+            file = request.files.get('file')
+            if not file:
+                flash('Please select a file.')
+                return redirect(url_for('admin_upload_scores', exam_id=exam_id))
+            
+            df = pd.read_csv(file, dtype=str)
+            success = 0
+            errors = 0
+            error_details = []
+            
+            for idx, row in df.iterrows():
+                try:
+                    cno = str(row.get('cno', '')).strip()
+                    if not cno or cno.lower() == 'nan':
+                        errors += 1
+                        error_details.append(f"Row {idx+2}: Missing CNO")
+                        continue
+                    
+                    student = Student.query.filter_by(
+                        cno=cno,
+                        current_class=exam.target_class,
+                        is_deleted=False
+                    ).first()
+                    
+                    if not student:
+                        errors += 1
+                        error_details.append(f"Row {idx+2}: Student {cno} not found in {exam.target_class}")
+                        continue
+                    
+                    for subj in subjects:
+                        marks_key = subj.code
+                        if marks_key in df.columns:
+                            val = str(row.get(marks_key, '')).strip()
+                            marks = None
+                            if val and val.lower() != 'nan' and val != '':
+                                try:
+                                    marks = float(val)
+                                except:
+                                    marks = None
+                            
+                            ss = StudentSubject.query.filter_by(
+                                student_id=student.id,
+                                exam_id=exam.id,
+                                subject_id=subj.id
+                            ).first()
+                            
+                            if ss:
+                                ss.marks = marks
+                            elif marks is not None:
+                                db.session.add(StudentSubject(
+                                    student_id=student.id,
+                                    exam_id=exam.id,
+                                    subject_id=subj.id,
+                                    marks=marks
+                                ))
+                    
+                    success += 1
+                    
+                except Exception as e:
+                    errors += 1
+                    error_details.append(f"Row {idx+2}: {str(e)}")
+                    continue
+            
+            db.session.commit()
+            
+            flash(f'Scores uploaded! {success} students processed.')
+            if errors > 0:
+                flash(f'{errors} rows had errors.', 'warning')
+                for err in error_details[:5]:
+                    flash(err, 'warning')
+            
+            return redirect(url_for('view_results', exam_id=exam_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Upload error: {str(e)}')
+            print(f"Upload error: {e}")
+    
+    # GET request - show upload form
+    return render_template('admin_upload_scores.html', exam=exam, subjects=subjects)
+
+
+# -------------------------------------------------------------------
+# Download Scores Template (CSV with CNOs and Student Names)
+# -------------------------------------------------------------------
+@app.route('/admin/download_scores_template/<int:exam_id>')
+@login_required
+def admin_download_scores_template(exam_id):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    exam = Exam.query.get_or_404(exam_id)
+    subjects = get_subjects_for_exam(exam)
+    students = Student.query.filter_by(
+        current_class=exam.target_class,
+        is_deleted=False
+    ).order_by(Student.cno).all()
+    
+    # Header: CNO, NAME, then subject codes
+    header = ['cno', 'name'] + [s.code for s in subjects]
+    
+    rows = [header]
+    for stu in students:
+        full_name = f"{stu.first_name} {stu.middle_name or ''} {stu.last_name}".strip()
+        row = [stu.cno if stu.cno else '', full_name]
+        
+        for subj in subjects:
+            ss = StudentSubject.query.filter_by(
+                student_id=stu.id,
+                exam_id=exam.id,
+                subject_id=subj.id
+            ).first()
+            row.append(ss.marks if ss and ss.marks is not None else '')
+        
+        rows.append(row)
+    
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerows(rows)
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f"attachment; filename=scores_{exam.target_class}_{exam.exam_type}.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+# -------------------------------------------------------------------
 # Run
 # -------------------------------------------------------------------
 if __name__ == '__main__':
