@@ -1653,6 +1653,74 @@ def admin_download_scores_template(exam_id):
     return output
 
 # -------------------------------------------------------------------
+# Bulk Assign Optional Subjects to Selected Students
+# -------------------------------------------------------------------
+@app.route('/bulk_assign_optionals/<class_name>', methods=['POST'])
+@login_required
+def bulk_assign_optionals(class_name):
+    if current_user.role != 'admin':
+        abort(403)
+    
+    try:
+        student_ids = request.form.getlist('student_ids')
+        optional_subjects = request.form.get('optional_subjects', '').strip()
+        
+        if not student_ids:
+            flash('No students selected.')
+            return redirect(url_for('registry'))
+        
+        if not optional_subjects:
+            flash('Please enter optional subjects (comma separated).')
+            return redirect(url_for('registry'))
+        
+        level = 'A' if class_name in ['Form5', 'Form6'] else 'O'
+        optional_codes = [s.strip().upper() for s in optional_subjects.split(',') if s.strip()]
+        
+        updated = 0
+        for sid in student_ids:
+            student = Student.query.get(int(sid))
+            if not student:
+                continue
+            
+            # Update student's optional_subjects field
+            student.optional_subjects = ','.join(optional_codes)
+            
+            # Delete old registrations for optional subjects
+            all_optional_codes = get_optional_subjects(student.curriculum, 'O')
+            for code in all_optional_codes:
+                subj = Subject.query.filter_by(code=code, level=level).first()
+                if subj:
+                    StudentSubjectRegistration.query.filter_by(
+                        student_id=student.id,
+                        subject_id=subj.id
+                    ).delete()
+            
+            # Add new optional subject registrations
+            for code in optional_codes:
+                subj = Subject.query.filter_by(code=code, level=level).first()
+                if subj:
+                    exists = StudentSubjectRegistration.query.filter_by(
+                        student_id=student.id,
+                        subject_id=subj.id
+                    ).first()
+                    if not exists:
+                        db.session.add(StudentSubjectRegistration(
+                            student_id=student.id,
+                            subject_id=subj.id
+                        ))
+            
+            updated += 1
+        
+        db.session.commit()
+        flash(f'Optional subjects assigned to {updated} students.')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}')
+    
+    return redirect(url_for('registry'))
+
+# -------------------------------------------------------------------
 # Run
 # -------------------------------------------------------------------
 if __name__ == '__main__':
